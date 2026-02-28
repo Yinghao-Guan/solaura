@@ -4,8 +4,8 @@ import Network
 final class UdpSender {
     static let shared = UdpSender()
 
-    // 改 Mac IP
-    private let host = NWEndpoint.Host("172.20.208.201")
+    // 改成你的 Mac IP
+    private let host = NWEndpoint.Host("10.34.215.162")
     private let port = NWEndpoint.Port(integerLiteral: 5005)
 
     private let conn: NWConnection

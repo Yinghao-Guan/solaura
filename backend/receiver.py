@@ -5,7 +5,7 @@ from pathlib import Path
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
-OUT = Path("../../../Downloads/temp_h4h-0c58cd0dde2af64264a616294fe53e8dbfcf3c93/mac/record.jsonl")
+OUT = Path("record.jsonl")
 
 def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -38,7 +38,7 @@ def main():
 
             if ok:
                 keys = list(msg.keys())
-                print(f"[RX] {addr} keys={keys} t={msg.get('t')}")
+                print("[RX]", addr, "mode=", msg.get("mode"), "obj=", [o.get("name") for o in msg.get("obj", [])], "keys=", list(msg.keys()))
             else:
                 print(f"[RX] {addr} (non-json) {text[:80]}")
 
