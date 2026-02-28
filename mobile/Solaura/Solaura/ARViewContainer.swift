@@ -45,9 +45,9 @@ struct ARViewContainer: UIViewRepresentable {
         // --- 发送 cam pose（30Hz） ---
         private var lastSentTs: TimeInterval = 0
 
-        // bottle 检测频率（5Hz 足够）
+        // bottle 检测频率（5Hz）
         private var lastBottleTs: TimeInterval = 0
-        private let bottleHz: Double = 2.0
+        private let bottleHz: Double = 5.0
 
         // 避免检测堆积：上一帧检测没回来就不发新检测
         private var detecting: Bool = false
@@ -130,9 +130,7 @@ struct ARViewContainer: UIViewRepresentable {
                         "cam": ["pos": camPos, "quat": camQuat],
                         "obj": []
                     ]
-                    DispatchQueue.global(qos: .utility).async { [sender] in
-                        sender.send(jsonObject: msg)
-                    }
+                    sender.send(jsonObject: msg)
                 }
 
                 // --- bottle 检测节流 ---
@@ -163,8 +161,6 @@ struct ARViewContainer: UIViewRepresentable {
         // MARK: - Bottle Detection (重要：不要把 capturedImage 直接交给异步)
 
         private func runBottleDetection(pixelBufferCopy: CVPixelBuffer, camPos: [Float], camQuat: [Float]) {
-            let t = Date().timeIntervalSince1970
-
             detector.detectBottleCenter(pixelBuffer: pixelBufferCopy) { [weak self] centerNorm, conf in
                 guard let self else { return }
 
@@ -181,16 +177,14 @@ struct ARViewContainer: UIViewRepresentable {
                     // 没检测到：miss
                     guard let centerNorm else {
                         let msg: [String: Any] = [
-                            "t": t,
+                            "t": Date().timeIntervalSince1970,
                             "seq": localSeq,
                             "mode": "bottle_miss",
                             "conf": Float(conf),
                             "cam": ["pos": camPos, "quat": camQuat],
                             "obj": []
                         ]
-                        DispatchQueue.global(qos: .utility).async { [sender = self.sender] in
-                            sender.send(jsonObject: msg)
-                        }
+                        self.sender.send(jsonObject: msg)
                         return
                     }
 
@@ -207,44 +201,20 @@ struct ARViewContainer: UIViewRepresentable {
                     }
 
                     guard let hit = results.first else {
-                        if let hit = results.first {
-                            let wt = hit.worldTransform
-                            let p = wt.columns.3
-                            let bottlePos: [Float] = [p.x, p.y, p.z]
-
-                            let msg: [String: Any] = [
-                                "t": t,
-                                "seq": localSeq,
-                                "mode": "bottle_target",
-                                "screen": ["u": Float(u), "v": Float(v)],
-                                "conf": Float(conf),
-                                "cam": ["pos": camPos, "quat": camQuat],
-                                "obj": [
-                                    ["name": "bottle", "pos": bottlePos, "conf": Float(conf)]
-                                ]
+                        // raycast miss 也发 bottle_target，但不带 pos（pos: null）
+                        let msg: [String: Any] = [
+                            "t": Date().timeIntervalSince1970,
+                            "seq": localSeq,
+                            "mode": "bottle_target",
+                            "screen": ["u": Float(u), "v": Float(v)],
+                            "conf": Float(conf),
+                            "cam": ["pos": camPos, "quat": camQuat],
+                            "obj": [
+                                ["name": "bottle", "pos": NSNull(), "conf": Float(conf)]
                             ]
+                        ]
 
-                            DispatchQueue.global(qos: .utility).async { [sender = self.sender] in
-                                sender.send(jsonObject: msg)
-                            }
-                        } else {
-                            // ✅ raycast miss 也发 bottle_target，但不带 pos（pos: null）
-                            let msg: [String: Any] = [
-                                "t": t,
-                                "seq": localSeq,
-                                "mode": "bottle_target",
-                                "screen": ["u": Float(u), "v": Float(v)],
-                                "conf": Float(conf),
-                                "cam": ["pos": camPos, "quat": camQuat],
-                                "obj": [
-                                    ["name": "bottle", "pos": NSNull(), "conf": Float(conf)]
-                                ]
-                            ]
-
-                            DispatchQueue.global(qos: .utility).async { [sender = self.sender] in
-                                sender.send(jsonObject: msg)
-                            }
-                        }
+                        self.sender.send(jsonObject: msg)
                         return
                     }
 
@@ -253,7 +223,7 @@ struct ARViewContainer: UIViewRepresentable {
                     let bottlePos: [Float] = [p.x, p.y, p.z]
 
                     let msg: [String: Any] = [
-                        "t": t,
+                        "t": Date().timeIntervalSince1970,
                         "seq": localSeq,
                         "mode": "bottle_target",
                         "screen": ["u": Float(u), "v": Float(v)],
@@ -264,9 +234,7 @@ struct ARViewContainer: UIViewRepresentable {
                         ]
                     ]
 
-                    DispatchQueue.global(qos: .utility).async { [sender = self.sender] in
-                        sender.send(jsonObject: msg)
-                    }
+                    self.sender.send(jsonObject: msg)
                 }
             }
         }
