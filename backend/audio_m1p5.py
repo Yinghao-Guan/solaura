@@ -8,10 +8,10 @@ from state import TargetState
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
 
-SR = 48000
+SR = 44100
 BEEP_HZ = 880.0
 BEEP_LEN = 0.06
-VOL = 0.15
+VOL = 0.8
 
 def clamp(x, a, b): return max(a, min(b, x))
 
@@ -30,16 +30,34 @@ def world_to_camera(v_w, cam_quat_xyzw):
     R = quat_to_rotmat_xyzw(cam_quat_xyzw)
     return R.T @ v_w
 
+
 def azimuth_from_vc(v_c):
-    x = float(v_c[0]); z = float(v_c[2])
-    az = math.atan2(x, -z)  # 左右反了就改成 atan2(-x, -z)
+    # 竖屏（Portrait）模式下，屏幕的左右实际上是相机的 Y 轴！
+    # 屏幕的上下才是相机的 X 轴。
+    y_axis = float(v_c[1])
+    z = float(v_c[2])
+
+    # 竖屏时，屏幕右侧通常对应物理传感器的 -Y 方向
+    # 如果你戴上耳机发现“左右反了”，只需要把 -y_axis 改成 y_axis 即可
+    az = math.atan2(y_axis, -z)
+
     return az
 
+
 def pan_from_az(az):
-    az = clamp(az, -math.pi/2, math.pi/2)
-    pan = az / (math.pi/2)
-    if abs(pan) < 0.03:  # 原来 0.08
+    # 【改动】将映射的极限角度缩小到极小值（比如 pi/12，大约只有 15 度）
+    # 这意味着只要瓶子偏离中心 15 度，声音就会 100% 被拉到左耳或右耳！
+    max_angle = math.pi / 12.0
+
+    az = clamp(az, -max_angle, max_angle)
+
+    # 增加一个放大系数，让稍微一点偏转就迅速拉满
+    pan = (az / max_angle)
+
+    # 死区保持不变，防止中心点疯狂左右跳
+    if abs(pan) < 0.05:
         pan = 0.0
+
     return clamp(pan, -1.0, 1.0)
 
 
@@ -47,21 +65,27 @@ def distance_to_interval(d):
     d = clamp(d, 0.2, 3.0)
     return 0.10 + (d - 0.2) / (3.0 - 0.2) * (0.70 - 0.10)
 
+
 def stereo_gains(pan):
-    # 更“硬”的线性 panning：pan=-1 纯左，+1 纯右
+    # 【改动2】使用音频行业标准的“恒定功率 (Constant Power) Panning”
+    # 这样声像移动会非常清晰，左右耳的音量过渡更符合人耳听觉
     pan = clamp(pan, -1.0, 1.0)
-    L = 0.5 * (1.0 - pan)
-    R = 0.5 * (1.0 + pan)
-    # 归一化到最大 1（可选）
-    m = max(L, R, 1e-6)
-    return L / m, R / m
+
+    # 将 -1 ~ 1 映射到 0 ~ pi/2
+    angle = (pan + 1.0) * math.pi / 4.0
+
+    L = math.cos(angle)
+    R = math.sin(angle)
+
+    return L, R
 
 
 def make_beep(pan):
     t = np.arange(int(SR * BEEP_LEN), dtype=np.float32) / SR
     wave = (np.sin(2 * math.pi * BEEP_HZ * t).astype(np.float32)) * VOL
     Lg, Rg = stereo_gains(pan)
-    return np.stack([wave * Lg, wave * Rg], axis=1)
+    # 强制转换为内存连续数组
+    return np.ascontiguousarray(np.stack([wave * Lg, wave * Rg], axis=1))
 
 def extract_target(msg):
     """
