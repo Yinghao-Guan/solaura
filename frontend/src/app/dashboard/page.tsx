@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
+
 export default function DashboardPage() {
   return (
     <main
@@ -62,7 +67,7 @@ export default function DashboardPage() {
         }}
       >
         <Label>3D Canvas</Label>
-        <Placeholder />
+        <TerrainCanvas />
       </section>
 
       {/* RIGHT — live feed */}
@@ -153,6 +158,219 @@ function Placeholder() {
         borderRadius: 6,
         background: "rgba(255,255,255,0.015)",
       }}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TERRAIN CANVAS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TerrainCanvas() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // ── Config ────────────────────────────────────────────────────────────────
+    const GRID       = 80;
+    const SPACING    = 0.18;
+    const MAX_HEIGHT = 5.0;
+    const SMOOTHING  = 0.10;
+    const HALF       = (GRID - 1) * SPACING * 0.5;
+
+    const SOURCE_PALETTE = [
+      { color: 0x00d4ff },
+      { color: 0xff4d8f },
+    ];
+
+    const FIXED_POSITIONS = [
+      { x:  2.0, z:  -2.0 },
+      { x: -4.0, z:  0.0 },
+    ];
+
+    // ── Renderer ──────────────────────────────────────────────────────────────
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.setSize(1, 1);
+    renderer.domElement.style.width  = "100%";
+    renderer.domElement.style.height = "100%";
+    container.appendChild(renderer.domElement);
+
+    // ── Scene / Camera ────────────────────────────────────────────────────────
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 8, 8);
+    camera.lookAt(0, 0, 0);
+
+    // ── Resize observer ───────────────────────────────────────────────────────
+    const ro = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      if (width === 0 || height === 0) return;
+      renderer.setSize(width, height);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    });
+    ro.observe(container);
+
+    // ── Terrain geometry ──────────────────────────────────────────────────────
+    const total     = GRID * GRID;
+    const positions = new Float32Array(total * 3);
+    const colors    = new Float32Array(total * 3);
+    const currentY  = new Float32Array(total);
+    const targetY   = new Float32Array(total);
+    const gx        = new Float32Array(total);
+    const gz        = new Float32Array(total);
+
+    for (let row = 0; row < GRID; row++) {
+      for (let col = 0; col < GRID; col++) {
+        const i          = row * GRID + col;
+        gx[i]            = col * SPACING - HALF;
+        gz[i]            = row * SPACING - HALF;
+        positions[i * 3]     = gx[i];
+        positions[i * 3 + 1] = 0;
+        positions[i * 3 + 2] = gz[i];
+      }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute("color",    new THREE.BufferAttribute(colors,    3));
+
+    scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
+      size: 0.055,
+      vertexColors: true,
+      transparent: true,
+      opacity: 1.0,
+      sizeAttenuation: true,
+    })));
+
+    // ── Center sphere — smaller ───────────────────────────────────────────────
+    scene.add(new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 48, 48),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.10, wireframe: true })
+    ));
+    scene.add(new THREE.Mesh(
+      new THREE.SphereGeometry(0.26, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0xbbaaff, transparent: true, opacity: 0.12 })
+    ));
+
+    // ── Sources ───────────────────────────────────────────────────────────────
+    const sources: { x: number; z: number; intensity: number; marker: THREE.Mesh }[] = [];
+
+    FIXED_POSITIONS.forEach((pos, idx) => {
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.09, 12, 12),
+        new THREE.MeshBasicMaterial({ color: SOURCE_PALETTE[idx].color })
+      );
+      marker.position.set(pos.x, 0.1, pos.z);
+      scene.add(marker);
+      sources.push({ x: pos.x, z: pos.z, intensity: 0.9, marker });
+    });
+
+    // ── Public API ────────────────────────────────────────────────────────────
+    (window as any).setSource = (index: number, data: { x?: number; z?: number; intensity?: number }) => {
+      if (!sources[index]) return;
+      Object.assign(sources[index], data);
+      sources[index].marker.position.set(sources[index].x, 0.1, sources[index].z);
+    };
+
+    (window as any).setSources = (list: { x?: number; z?: number; intensity?: number }[]) => {
+      list.forEach((s, i) => (window as any).setSource(i, s));
+    };
+
+    // ── Source influence ──────────────────────────────────────────────────────
+    function sourceInfluence(sx: number, sz: number, intensity: number, px: number, pz: number) {
+      const srcDist = Math.sqrt(sx * sx + sz * sz);
+      if (srcDist < 0.001) return intensity;
+
+      const srcAngle = Math.atan2(sz, sx);
+      const ptDist   = Math.sqrt(px * px + pz * pz);
+      if (ptDist < 0.001) return 0;
+
+      const ptAngle = Math.atan2(pz, px);
+      let diff = Math.abs(srcAngle - ptAngle);
+      if (diff > Math.PI) diff = 2 * Math.PI - diff;
+
+      const directional = Math.max(0, Math.cos(diff));
+      const distFactor  = Math.min(ptDist / (HALF * 0.6), 1.0);
+
+      return intensity * Math.pow(directional, 2.5) * distFactor;
+    }
+
+    // ── Animation loop ────────────────────────────────────────────────────────
+    let rafId: number;
+    let t = 0;
+
+    function animate() {
+      rafId = requestAnimationFrame(animate);
+      t += 0.012;
+
+      // compute target heights
+      for (let i = 0; i < total; i++) {
+        const px = gx[i];
+        const pz = gz[i];
+
+        let height = 0;
+        for (const src of sources) {
+          height += sourceInfluence(src.x, src.z, src.intensity, px, pz);
+        }
+
+        const undulation = Math.sin(px * 1.2 + t * 0.4) * Math.cos(pz * 1.0 - t * 0.3) * 0.05;
+        targetY[i] = Math.min(height * MAX_HEIGHT + undulation, MAX_HEIGHT);
+      }
+
+      // smooth + write color
+      for (let i = 0; i < total; i++) {
+        currentY[i] += (targetY[i] - currentY[i]) * SMOOTHING;
+        const y  = currentY[i];
+        const t_ = Math.min(y / MAX_HEIGHT, 1);
+
+        positions[i * 3 + 1] = y;
+
+        // color ramp: dark indigo → violet → cyan → white
+        let cr, cg, cb;
+        if (t_ < 0.33) {
+          const k = t_ / 0.33;
+          cr = 0.18 + k * 0.40; cg = 0.08 + k * 0.22; cb = 0.35 + k * 0.60;
+        } else if (t_ < 0.66) {
+          const k = (t_ - 0.33) / 0.33;
+          cr = 0.58 - k * 0.58; cg = 0.30 + k * 0.55; cb = 0.95 + k * 0.05;
+        } else {
+          const k = (t_ - 0.66) / 0.34;
+          cr = k;                cg = 0.85 + k * 0.15; cb = 1.0;
+        }
+
+        colors[i * 3]     = cr;
+        colors[i * 3 + 1] = cg;
+        colors[i * 3 + 2] = cb;
+      }
+
+      geo.attributes.position.needsUpdate = true;
+      geo.attributes.color.needsUpdate    = true;
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // ── Cleanup ───────────────────────────────────────────────────────────────
+    return () => {
+      cancelAnimationFrame(rafId);
+      ro.disconnect();
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{ flex: 1, width: "100%", overflow: "hidden", borderRadius: 4 }}
     />
   );
 }
