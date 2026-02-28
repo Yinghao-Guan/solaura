@@ -62,8 +62,24 @@ def pan_from_az(az):
 
 
 def distance_to_interval(d):
-    d = clamp(d, 0.2, 3.0)
-    return 0.10 + (d - 0.2) / (3.0 - 0.2) * (0.70 - 0.10)
+    # 距离范围保持不变，依旧是专门针对 1.5m 的 Demo 环境
+    min_dist = 0.2
+    max_dist = 1.5
+
+    d = clamp(d, min_dist, max_dist)
+    ratio = (d - min_dist) / (max_dist - min_dist)
+
+    # 【改动 1】将指数调高到 2.0（平方曲线）
+    # 这意味着 ratio 在 0 到 1 之间增长时，curve_ratio 早期会非常小
+    # 导致计算出的 interval 会在很长一段距离内都死死咬住 min_interval，声音持续高频！
+    curve_ratio = ratio ** 2.0
+
+    # 【改动 2】极限压缩时间间隔的上下限
+    # 注意：BEEP_LEN 是 0.06s，所以 min_interval 极限就是 0.065s 左右，再短波形就重叠了
+    min_interval = 0.07  # 极其疯狂的连击音（原为 0.08）
+    max_interval = 0.50  # 最远时也保持 0.5秒/次 的中等语速（原为 1.00）
+
+    return min_interval + curve_ratio * (max_interval - min_interval)
 
 
 def stereo_gains(pan):
@@ -80,12 +96,21 @@ def stereo_gains(pan):
     return L, R
 
 
-def make_beep(pan):
+# 修改 make_beep，增加参数 d
+def make_beep(pan, d):
+    # 将 0.2m ~ 1.5m 的距离反向映射到 1500Hz ~ 400Hz 的音调区间
+    # 越近声音越尖锐高昂，越远声音越低沉
+    d_clamped = clamp(d, 0.2, 1.5)
+    ratio = (1.5 - d_clamped) / (1.5 - 0.2)  # 越近 ratio 越接近 1
+
+    # 基础频率 400Hz（低沉），最大增加 1100Hz（1500Hz 比较尖锐）
+    dynamic_hz = 400.0 + (ratio * 1100.0)
+
     t = np.arange(int(SR * BEEP_LEN), dtype=np.float32) / SR
-    wave = (np.sin(2 * math.pi * BEEP_HZ * t).astype(np.float32)) * VOL
-    Lg, Rg = stereo_gains(pan)
-    # 强制转换为内存连续数组
-    return np.ascontiguousarray(np.stack([wave * Lg, wave * Rg], axis=1))
+    wave = (np.sin(2 * math.pi * dynamic_hz * t).astype(np.float32)) * VOL
+
+    L, R = stereo_gains(pan)
+    return np.ascontiguousarray(np.stack([wave * L, wave * R], axis=1))
 
 def extract_target(msg):
     """
@@ -159,6 +184,9 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
     print("[TIP] Tap -> immediate beep. No new target for 2s -> silence.")
 
     with sd.OutputStream(samplerate=SR, channels=2, dtype="float32") as stream:
+        # 在 while 循环上方新增一个变量，用于保存瓶子的绝对世界坐标
+        last_target_pos = None
+
         while True:
             msg, now = next(src)
 
@@ -166,15 +194,35 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
             st.tick(now)
 
             if msg is not None:
-                if msg.get("mode") in ("tap_miss", "bottle_miss"):
+                mode = msg.get("mode")
+
+                # 处理目标丢失
+                if mode in ("tap_miss", "bottle_miss"):
                     st.on_miss(now)
                     want = None
+                    last_target_pos = None
 
+                # 处理目标更新 (2Hz)
                 parsed = extract_target(msg)
                 if parsed is not None:
                     target_pos, cam_pos, cam_quat = parsed
-                    v_w = target_pos - cam_pos
-                    v_w = ema_vw.update(v_w)
+                    last_target_pos = target_pos  # 重点：保存目标的绝对物理世界坐标
+
+                    # 只有从“无目标”变成“有目标”的瞬间才强制立刻响一下，防止破坏后续节奏
+                    if not st.should_sound():
+                        last_beep_t = 0.0
+
+                    st.on_target(now)
+
+                # --- 核心修复：以 30Hz 的相机位姿持续更新方位和距离 ---
+                cam = msg.get("cam")
+                # 只要相机在动，且我们知道瓶子在哪，且状态机允许发声，就全速重新计算！
+                if cam is not None and last_target_pos is not None and st.should_sound():
+                    cam_pos = np.array(cam.get("pos"), np.float32)
+                    cam_quat = np.array(cam.get("quat"), np.float32)
+
+                    v_w = last_target_pos - cam_pos
+                    v_w = ema_vw.update(v_w)  # 现在的滤波是丝滑的 30Hz
 
                     d = float(np.linalg.norm(v_w))
                     v_c = world_to_camera(v_w, cam_quat)
@@ -183,18 +231,17 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
                     interval = distance_to_interval(d)
 
                     want = (pan, interval, d, az)
-                    st.on_target(now)
 
-                    # 每次新 target 立刻响一下
-                    last_beep_t = 0.0
-
+            # 状态机超时处理
             if not st.should_sound():
                 want = None
+                last_target_pos = None
 
+            # 纯粹由音频时钟控制节奏，不再被网络收发强制打断
             if want is not None:
                 pan, interval, d, az = want
                 if now - last_beep_t >= interval:
-                    stream.write(make_beep(pan))
+                    stream.write(make_beep(pan, d))
                     last_beep_t = now
                     print(f"az={az:+.2f} pan={pan:+.2f} dist={d:.2f}m int={interval:.2f}s")
 
