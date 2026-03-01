@@ -229,7 +229,7 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
     ht.start()
     print("[OK] HTTP state server on http://0.0.0.0:8765/state")
 
-    ema_vw = EMA3(alpha=0.25)
+
     st = TargetState(timeout_s=2.0)
     last_beep_t = 0.0
     main_last_target_update = 0.0
