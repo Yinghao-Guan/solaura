@@ -7,6 +7,7 @@ from state import TargetState
 
 UDP_IP = "0.0.0.0"
 UDP_PORT = 5005
+HTTP_PORT = 8765
 
 SR = 44100
 BEEP_HZ = 880.0
@@ -226,9 +227,62 @@ def udp_listener_thread():
             pass
 
 
+class StateHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/state":
+            with state_lock:
+                cam_pos    = latest_state["cam_pos"]
+                cam_quat   = latest_state["cam_quat"]
+                bottle_pos = latest_state["bottle_pos"]
+                hand_pos   = latest_state["hand_pos"]
+                is_active  = latest_state["is_active"]
+
+            resp: dict = {"is_active": is_active}
+
+            if cam_pos is not None:
+                resp["cam_pos"] = cam_pos.tolist()
+
+            if bottle_pos is not None and cam_pos is not None and cam_quat is not None:
+                resp["target_pos"] = bottle_pos.tolist()
+                v_w = bottle_pos - cam_pos
+                v_c = world_to_camera(v_w, cam_quat)
+                resp["cam_offset"] = v_c.tolist()
+
+            if hand_pos is not None and cam_pos is not None and cam_quat is not None:
+                v_hand_w = hand_pos - cam_pos
+                v_hand_c = world_to_camera(v_hand_w, cam_quat)
+                resp["hand_cam_offset"] = v_hand_c.tolist()
+                resp["hand_visible"] = True
+            else:
+                resp["hand_visible"] = False
+
+            body = json.dumps(resp).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def log_message(self, format, *args):
+        pass  # suppress request logs
+
+
+def http_server_thread():
+    server = HTTPServer(("0.0.0.0", HTTP_PORT), StateHandler)
+    print(f"[OK] HTTP server running on port {HTTP_PORT}")
+    server.serve_forever()
+
+
 def main(mode="live", replay_path=None, replay_speed=1.0):
     t = threading.Thread(target=udp_listener_thread, daemon=True)
     t.start()
+
+    ht = threading.Thread(target=http_server_thread, daemon=True)
+    ht.start()
 
     st = TargetState(timeout_s=2.0)
     last_beep_t = 0.0
