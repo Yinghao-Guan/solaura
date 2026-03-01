@@ -1,6 +1,6 @@
 "use client";
 
-import { PageShell } from "../components/PageShell";
+import Link from "next/link";
 
 const ROWS = [
   { step: "01", name: "SENSING", value: "iPhone LiDAR maps objects up to 5m ahead" },
@@ -10,18 +10,48 @@ const ROWS = [
 
 export default function Page3WhatWeBuilt() {
   return (
-    <PageShell
-      pageNum={3}
-      totalPages={7}
-      nextHref="/dashboard"
-      prevHref="/problem"
-      theme="dark"
-      backgroundColor="#090620ff"
-    >
-      <main
-        className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-6 md:px-12"
+    <>
+      {/* ── Page navigation overlay ── */}
+      <div
+        className="fixed left-1/2 top-0 z-[9999] -translate-x-1/2 py-6 text-center"
         style={{
-          maxWidth: 980,
+          fontFamily: "Geist Mono, monospace",
+          fontSize: 11,
+          color: "rgba(180, 160, 255, 0.45)",
+          letterSpacing: "0.15em",
+        }}
+      >
+        03 / 07
+      </div>
+      <Link
+        href="/problem"
+        className="fixed bottom-0 left-0 z-[9999] pb-8 pl-8 transition-opacity hover:opacity-80"
+        style={{
+          fontFamily: "Geist, system-ui, sans-serif",
+          fontSize: 14,
+          color: "rgba(255,255,255,0.35)",
+        }}
+      >
+        ← Back
+      </Link>
+      <Link
+        href="/dashboard"
+        className="fixed bottom-0 right-0 z-[9999] pb-8 pr-8 transition-opacity hover:opacity-80"
+        style={{
+          fontFamily: "Geist, system-ui, sans-serif",
+          fontSize: 14,
+          color: "#0891b2",
+        }}
+      >
+        Next →
+      </Link>
+
+      <main
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           color: "#e8e4f0",
           backgroundColor: "#090620ff",
           backgroundImage: `radial-gradient(
@@ -31,7 +61,8 @@ export default function Page3WhatWeBuilt() {
             transparent 80%
           )`,
           fontFamily: "system-ui, sans-serif",
-          minHeight: "100%",
+          overflow: "hidden",
+          padding: "0 24px",
         }}
       >
         <div className="mx-auto grid w-full max-w-[920px] grid-cols-1 items-center gap-10 lg:grid-cols-[58%_38%]">
@@ -180,11 +211,7 @@ export default function Page3WhatWeBuilt() {
                 x={150}
                 y={18}
                 textAnchor="middle"
-                style={{
-                  fontSize: 9,
-                  letterSpacing: "0.2em",
-                  fill: "rgba(180, 160, 255, 0.6)",
-                }}
+                style={{ fontSize: 9, letterSpacing: "0.2em", fill: "rgba(180, 160, 255, 0.6)" }}
               >
                 FORWARD SENSING ZONE
               </text>
@@ -200,11 +227,11 @@ export default function Page3WhatWeBuilt() {
               <circle cx={150} cy={160} r={5} fill="rgba(180, 160, 255, 0.9)" />
               <text x={150} y={183} textAnchor="middle" style={{ fontSize: 9, fill: "rgba(180, 160, 255, 0.6)" }}>YOU</text>
               <circle cx={150} cy={25} r={5} fill="rgba(180, 160, 255, 0.9)" />
-              <text x={150} y={12} textAnchor="middle" style={{ fontSize: 9, fill: "rgba(180, 160, 255, 0.6)" }}>OBJECT</text>
+              <text x={140} y={12} textAnchor="middle" style={{ fontSize: 9, fill: "rgba(180, 160, 255, 0.6)" }}>OBJECT</text>
             </svg>
           </div>
         </div>
       </main>
-    </PageShell>
+    </>
   );
 }
