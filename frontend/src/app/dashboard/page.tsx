@@ -7,9 +7,9 @@ import * as THREE from "three";
 const CANVAS_HALF = 7.11;
 // Azimuth ±25° fills the full canvas width (amplifies far objects naturally)
 const AZ_SCALE    = CANVAS_HALF / (Math.PI / 7.2);
-// Camera sphere sits at canvas z=5; 3 m forward reaches the top (-CANVAS_HALF)
+// Camera sphere sits at canvas z=5; 1.5 m forward reaches the top (-CANVAS_HALF)
 const CAM_SPHERE_Z = 5;
-const DEPTH_SCALE  = (CAM_SPHERE_Z + CANVAS_HALF) / 3.0;  // ~4.0
+const DEPTH_SCALE  = (CAM_SPHERE_Z + CANVAS_HALF) / 1.5;  // ~8.1
 
 export default function DashboardPage() {
   const [coords, setCoords] = useState<[number, number, number] | null>(null);
