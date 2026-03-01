@@ -234,7 +234,7 @@ function TerrainCanvas() {
     const GRID       = 80;
     const SPACING    = 0.18;
     const MAX_HEIGHT = 5.0;
-    const SMOOTHING  = 0.10;
+    const SMOOTHING  = 0.20;
     const HALF       = (GRID - 1) * SPACING * 0.5;
 
     const SOURCE_PALETTE = [
@@ -258,8 +258,8 @@ function TerrainCanvas() {
 
     // ── Scene / Camera ────────────────────────────────────────────────────────
     const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(0, 8, 8);
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+    camera.position.set(0, 3, 13);
     camera.lookAt(0, 0, 0);
 
     // ── Resize observer ───────────────────────────────────────────────────────
@@ -319,7 +319,7 @@ function TerrainCanvas() {
 
     FIXED_POSITIONS.forEach((pos, idx) => {
       const marker = new THREE.Mesh(
-        new THREE.SphereGeometry(0.09, 12, 12),
+        new THREE.SphereGeometry(0.20, 16, 16),
         new THREE.MeshBasicMaterial({ color: SOURCE_PALETTE[idx].color })
       );
       marker.position.set(pos.x, 0.1, pos.z);
