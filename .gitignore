@@ -212,3 +212,7 @@ xcuserdata/
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,jetbrains,xcode,visualstudiocode
 node_modules/
 .next/
+
+# ios .env
+Secrets.swift
+mobile/Solaura/Solaura/Secrets.swift

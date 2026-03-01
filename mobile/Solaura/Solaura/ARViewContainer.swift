@@ -127,6 +127,9 @@ struct ARViewContainer: UIViewRepresentable {
 
         func session(_ session: ARSession, didUpdate frame: ARFrame) {
             autoreleasepool {
+                // 📸 1. 偷拍最新画面给 Gemini 大脑
+                AppStateManager.shared.latestPixelBuffer = frame.capturedImage
+                
                 let ts = frame.timestamp
                 let transform = frame.camera.transform
                 let camPos: [Float] = [transform.columns.3.x, transform.columns.3.y, transform.columns.3.z]
@@ -134,6 +137,9 @@ struct ARViewContainer: UIViewRepresentable {
                 let camQuat: [Float] = [rot.vector.x, rot.vector.y, rot.vector.z, rot.vector.w]
 
                 guard isSafe(camPos) && isSafe(camQuat) else { return }
+                
+                // 🛑 2. 核心拦截开关：如果雷达未激活，截断高频识别，省电聊天！
+                guard AppStateManager.shared.isRadarActive else { return }
 
                 if ts - lastSentTs >= (1.0 / 30.0) {
                     lastSentTs = ts
