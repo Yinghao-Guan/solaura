@@ -1,4 +1,5 @@
 import math, time, json, socket, threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import numpy as np
 import sounddevice as sd
 
@@ -91,21 +92,73 @@ def extract_target(msg):
     cam = msg.get("cam") or {}
     cam_pos = cam.get("pos");
     cam_quat = cam.get("quat")
-    if cam_pos is None or cam_quat is None: return None
+    if cam_pos is None or cam_quat is None:
+        return None
 
-    want_name = "bottle" if msg.get("mode") in ("bottle_mock", "bottle_target", "bottle_depth") else (
-        "target" if msg.get("mode") == "tap_target" else None)
-    if want_name is None: return None
+    want_name = None
+    if msg.get("mode") in ("bottle_mock", "bottle_target", "bottle_depth"):
+        want_name = "bottle"
+    elif msg.get("mode") == "tap_target":
+        want_name = "target"
+    else:
+        return None
 
-    obj_pos = next((o.get("pos") for o in msg.get("obj", []) if o.get("name") == want_name), None)
-    if obj_pos is None: return None
+    obj_pos = None
+    for o in msg.get("obj", []):
+        if o.get("name") == want_name:
+            obj_pos = o.get("pos")
+            break
+    if obj_pos is None:
+        return None
 
-    return (np.array(obj_pos, np.float32), np.array(cam_pos, np.float32), np.array(cam_quat, np.float32))
+    return (np.array(obj_pos, np.float32),
+            np.array(cam_pos, np.float32),
+            np.array(cam_quat, np.float32))
 
 
-# ==========================================
-# 🚀 修复 2：将滤波放入绝对稳定的 30Hz 时钟内
-# ==========================================
+# ================= HTTP State Server =================
+class _StateHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        with state_lock:
+            cp = latest_state["cam_pos"]
+            tp = latest_state["target_pos"]
+            cq = latest_state["cam_quat"]
+            active = latest_state["is_active"]
+
+        # Camera-frame offset + derived quantities for visualization
+        cam_offset = None
+        az = None       # azimuth angle in radians (left/right)
+        dist = None     # 3-D distance in metres
+        if cp is not None and tp is not None and cq is not None:
+            v_w = tp - cp
+            v_c = world_to_camera(v_w, cq)
+            cam_offset = v_c.tolist()
+            az   = math.atan2(float(v_c[1]), -float(v_c[2]))
+            dist = float(np.linalg.norm(v_w))
+
+        body = json.dumps({
+            "cam_pos":    cp.tolist() if cp is not None else None,
+            "target_pos": tp.tolist() if tp is not None else None,
+            "cam_offset": cam_offset,   # [x_cam, y_cam(=LR), z_cam(=FB)]
+            "az":         az,           # azimuth (rad) – same as audio uses
+            "dist":       dist,         # metres
+            "is_active":  bool(active),
+        }).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass  # suppress access logs
+
+
+def http_server_thread():
+    HTTPServer(("0.0.0.0", 8765), _StateHandler).serve_forever()
+
+
+# ================= 🚀 核心修改：多线程与全局共享状态 =================
 state_lock = threading.Lock()
 latest_state = {
     "cam_pos": None,
@@ -171,6 +224,12 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
     t = threading.Thread(target=udp_listener_thread, daemon=True)
     t.start()
 
+    # 启动 HTTP 状态服务器线程
+    ht = threading.Thread(target=http_server_thread, daemon=True)
+    ht.start()
+    print("[OK] HTTP state server on http://0.0.0.0:8765/state")
+
+    ema_vw = EMA3(alpha=0.25)
     st = TargetState(timeout_s=2.0)
     last_beep_t = 0.0
     main_last_target_update = 0.0

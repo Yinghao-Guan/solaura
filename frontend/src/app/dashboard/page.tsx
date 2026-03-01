@@ -1,9 +1,64 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
+// Must match HALF in TerrainCanvas (= (GRID-1)*SPACING*0.5 = 79*0.18*0.5)
+const CANVAS_HALF = 7.11;
+// Azimuth ±25° fills the full canvas width (amplifies far objects naturally)
+const AZ_SCALE    = CANVAS_HALF / (Math.PI / 7.2);
+// Camera sphere sits at canvas z=5; 3 m forward reaches the top (-CANVAS_HALF)
+const CAM_SPHERE_Z = 5;
+const DEPTH_SCALE  = (CAM_SPHERE_Z + CANVAS_HALF) / 3.0;  // ~4.0
+
 export default function DashboardPage() {
+  const [coords, setCoords] = useState<[number, number, number] | null>(null);
+  const [isActive, setIsActive] = useState(false);
+  const [distance, setDistance] = useState<number | null>(null);
+
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:8765/state");
+        const data = await res.json();
+
+        if (data.cam_pos && data.target_pos && data.cam_offset && data.az != null) {
+          const [cx, cy, cz]: number[] = data.cam_pos;
+          const [tx, ty, tz]: number[] = data.target_pos;
+          const dx = tx - cx, dy = ty - cy, dz = tz - cz;
+          const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          const az: number   = data.az;    // azimuth (rad) – left/right angle
+          const dist: number = data.dist;  // 3-D distance (m)
+
+          setCoords([dx, dy, dz]);
+          setIsActive(data.is_active);
+          setDistance(d);
+
+          if (typeof (window as any).setSource === "function") {
+            (window as any).setSource(0, {
+              // azimuth-based X: same angle = same position regardless of dist
+              x: az * AZ_SCALE,
+              // depth-based Z: 0 m = camera sphere, 3 m = top of canvas
+              z: CAM_SPHERE_Z - dist * DEPTH_SCALE,
+              intensity: data.is_active ? 0.9 : 0.0,
+            });
+            (window as any).setSource(1, { intensity: 0.0 });
+          }
+        } else {
+          setIsActive(false);
+          if (typeof (window as any).setSource === "function") {
+            (window as any).setSource(0, { intensity: 0.0 });
+            (window as any).setSource(1, { intensity: 0.0 });
+          }
+        }
+      } catch {
+        // backend not running
+      }
+    }, 100);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <main
       style={{
@@ -31,7 +86,7 @@ export default function DashboardPage() {
           borderRight: "1px solid rgba(180, 160, 255, 0.12)",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 66 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
           <div>
             <div style={{ fontSize: 40, fontWeight: 600, color: "#fff" }}>?</div>
@@ -39,16 +94,24 @@ export default function DashboardPage() {
 
           <Divider />
 
-          <Metric label="Latency" value="—" unit="ms" />
-          <Metric label="State"   value="—" />
+          <Metric label="Distance" value={distance !== null ? distance.toFixed(2) : "—"} unit="m" />
+          <Metric
+            label="State"
+            value={isActive ? "LOCKED" : "IDLE"}
+            highlight={isActive}
+          />
 
           <Divider />
 
           <div>
-            <Label>Coordinates</Label>
+            <Label>Object Offset (m)</Label>
             <div style={{ display: "flex", gap: 8 }}>
-              {["X", "Y", "Z"].map((axis) => (
-                <CoordBox key={axis} axis={axis} />
+              {(["X", "Y", "Z"] as const).map((axis, i) => (
+                <CoordBox
+                  key={axis}
+                  axis={axis}
+                  value={coords ? coords[i].toFixed(2) : undefined}
+                />
               ))}
             </div>
           </div>
@@ -105,11 +168,11 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Metric({ label, value, unit }: { label: string; value: string; unit?: string }) {
+function Metric({ label, value, unit, highlight }: { label: string; value: string; unit?: string; highlight?: boolean }) {
   return (
     <div>
       <Label>{label}</Label>
-      <div style={{ fontSize: 16, color: "rgba(255,255,255,0.88)" }}>
+      <div style={{ fontSize: 16, color: highlight ? "#7bf5a0" : "rgba(255,255,255,0.88)" }}>
         {value}
         {unit && (
           <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginLeft: 3 }}>
@@ -121,7 +184,7 @@ function Metric({ label, value, unit }: { label: string; value: string; unit?: s
   );
 }
 
-function CoordBox({ axis }: { axis: string }) {
+function CoordBox({ axis, value }: { axis: string; value?: string }) {
   return (
     <div
       style={{
@@ -135,7 +198,7 @@ function CoordBox({ axis }: { axis: string }) {
       <div style={{ fontSize: 8, letterSpacing: "0.14em", color: "rgba(180,160,255,0.4)", marginBottom: 2 }}>
         {axis}
       </div>
-      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)" }}>—</div>
+      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)" }}>{value ?? "—"}</div>
     </div>
   );
 }
@@ -177,17 +240,15 @@ function TerrainCanvas() {
     const GRID       = 80;
     const SPACING    = 0.18;
     const MAX_HEIGHT = 5.0;
-    const SMOOTHING  = 0.10;
+    const SMOOTHING  = 0.20;
     const HALF       = (GRID - 1) * SPACING * 0.5;
 
     const SOURCE_PALETTE = [
-      { color: 0x00d4ff },
-      { color: 0xff4d8f },
+      { color: 0x00d4ff },   // bottle marker — cyan
     ];
 
     const FIXED_POSITIONS = [
-      { x:  2.0, z:  -2.0 },
-      { x: -4.0, z:  0.0 },
+      { x: 0.0, z: 0.0 },   // bottle — starts at centre, moved by live data
     ];
 
     // ── Renderer ──────────────────────────────────────────────────────────────
@@ -201,8 +262,8 @@ function TerrainCanvas() {
 
     // ── Scene / Camera ────────────────────────────────────────────────────────
     const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(0, 8, 8);
+    const camera = new THREE.PerspectiveCamera(20, 1, 0.1, 100);
+    camera.position.set(0, 3, 13);
     camera.lookAt(0, 0, 0);
 
     // ── Resize observer ───────────────────────────────────────────────────────
@@ -247,27 +308,33 @@ function TerrainCanvas() {
       sizeAttenuation: true,
     })));
 
-    // ── Center sphere — smaller ───────────────────────────────────────────────
-    scene.add(new THREE.Mesh(
+    // ── Camera sphere (moved toward viewer = lower on screen) ─────────────────
+    const camSpherePos = new THREE.Vector3(0, 0.1, 5);
+    const camSphereOuter = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 48, 48),
       new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.10, wireframe: true })
-    ));
-    scene.add(new THREE.Mesh(
+    );
+    camSphereOuter.position.copy(camSpherePos);
+    scene.add(camSphereOuter);
+
+    const camSphereInner = new THREE.Mesh(
       new THREE.SphereGeometry(0.26, 32, 32),
       new THREE.MeshBasicMaterial({ color: 0xbbaaff, transparent: true, opacity: 0.12 })
-    ));
+    );
+    camSphereInner.position.copy(camSpherePos);
+    scene.add(camSphereInner);
 
     // ── Sources ───────────────────────────────────────────────────────────────
     const sources: { x: number; z: number; intensity: number; marker: THREE.Mesh }[] = [];
 
     FIXED_POSITIONS.forEach((pos, idx) => {
       const marker = new THREE.Mesh(
-        new THREE.SphereGeometry(0.09, 12, 12),
+        new THREE.SphereGeometry(0.20, 16, 16),
         new THREE.MeshBasicMaterial({ color: SOURCE_PALETTE[idx].color })
       );
       marker.position.set(pos.x, 0.1, pos.z);
       scene.add(marker);
-      sources.push({ x: pos.x, z: pos.z, intensity: 0.9, marker });
+      sources.push({ x: pos.x, z: pos.z, intensity: 0.0, marker });
     });
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -297,7 +364,7 @@ function TerrainCanvas() {
       const directional = Math.max(0, Math.cos(diff));
       const distFactor  = Math.min(ptDist / (HALF * 0.6), 1.0);
 
-      return intensity * Math.pow(directional, 2.5) * distFactor;
+      return intensity * Math.pow(directional, 1.0) * distFactor;
     }
 
     // ── Animation loop ────────────────────────────────────────────────────────
@@ -318,8 +385,7 @@ function TerrainCanvas() {
           height += sourceInfluence(src.x, src.z, src.intensity, px, pz);
         }
 
-        const undulation = Math.sin(px * 1.2 + t * 0.4) * Math.cos(pz * 1.0 - t * 0.3) * 0.05;
-        targetY[i] = Math.min(height * MAX_HEIGHT + undulation, MAX_HEIGHT);
+        targetY[i] = Math.min(height * MAX_HEIGHT, MAX_HEIGHT);
       }
 
       // smooth + write color
