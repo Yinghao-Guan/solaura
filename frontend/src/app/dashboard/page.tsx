@@ -20,11 +20,16 @@ export default function DashboardPage() {
         const res = await fetch("http://localhost:8765/state");
         const data = await res.json();
 
-        if (data.cam_pos && data.target_pos) {
+        if (data.cam_pos && data.target_pos && data.cam_offset) {
           const [cx, cy, cz]: number[] = data.cam_pos;
           const [tx, ty, tz]: number[] = data.target_pos;
           const dx = tx - cx, dy = ty - cy, dz = tz - cz;
           const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          // cam_offset = world vector rotated into camera frame
+          // v_c[1] = left/right (same as audio azimuth uses)
+          // v_c[2] = forward/back (-Z is forward in camera frame)
+          const [, vy_cam, vz_cam]: number[] = data.cam_offset;
 
           setCoords([dx, dy, dz]);
           setIsActive(data.is_active);
@@ -32,8 +37,8 @@ export default function DashboardPage() {
 
           if (typeof (window as any).setSource === "function") {
             (window as any).setSource(0, {
-              x: dx * WORLD_TO_CANVAS,
-              z: dz * WORLD_TO_CANVAS,
+              x:  vy_cam * WORLD_TO_CANVAS,  // camera Y → canvas X (left/right)
+              z:  vz_cam * WORLD_TO_CANVAS,  // camera Z → canvas Z (fwd=-Z=upper)
               intensity: data.is_active ? 0.9 : 0.0,
             });
             // Hide second fixed source

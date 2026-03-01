@@ -114,10 +114,20 @@ class _StateHandler(BaseHTTPRequestHandler):
         with state_lock:
             cp = latest_state["cam_pos"]
             tp = latest_state["target_pos"]
+            cq = latest_state["cam_quat"]
             active = latest_state["is_active"]
+
+        # Camera-frame offset: v_c[1] = left/right, v_c[2] = forward/back
+        cam_offset = None
+        if cp is not None and tp is not None and cq is not None:
+            v_w = tp - cp
+            v_c = world_to_camera(v_w, cq)
+            cam_offset = v_c.tolist()
+
         body = json.dumps({
             "cam_pos":    cp.tolist() if cp is not None else None,
             "target_pos": tp.tolist() if tp is not None else None,
+            "cam_offset": cam_offset,   # [x_cam, y_cam(=LR), z_cam(=FB)]
             "is_active":  bool(active),
         }).encode()
         self.send_response(200)
