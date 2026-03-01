@@ -1,236 +1,143 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { PageShell } from "../components/PageShell";
 
-const WITHOUT = [
-  "Dedicated hardware: $360–$5,000+",
-  "Requires internet (Seeing AI, Lookout)",
-  "Verbal narration — average 2–4s delay",
-  "Fails indoors and in darkness",
-  "Requires extra device or attachment",
-  "Ultrasonic canes: detect ahead only, no spatial audio",
+const BARS = [
+  { name: "OrCam MyEye 2", price: "$4,500", width: 100, bg: "#ff4444" },
+  { name: "WeWALK / BuzzClip", price: "$650", width: 14, bg: "#ff8844" },
+  { name: "Smart Vision Glasses", price: "$360", width: 8, bg: "#ffaa44" },
+  { name: "Solaura", price: "$0 hardware", width: 1.5, bg: "#00cc88" },
 ];
 
-const WITH_SOLAURA = [
-  "Runs on existing iPhone Pro",
-  "Fully offline — on-device LiDAR",
-  "Directional audio feedback <50ms",
-  "Works in complete darkness",
-  "Zero hardware cost beyond iPhone",
-  "Stereo panning proven to convey object direction (IEEE 2018–2026)",
-];
+export default function Page4() {
+  const [barMounted, setBarMounted] = useState(false);
 
-export default function Page4TheProof() {
+  useEffect(() => {
+    setBarMounted(true);
+  }, []);
+
   return (
-    <PageShell pageNum={4} totalPages={5} nextHref="/demo" prevHref="/solution">
+    <PageShell
+      pageNum={5}
+      totalPages={7}
+      nextHref="/unlock"
+      prevHref="/process"
+      breadcrumb="Solaura / What It Costs"
+    >
       <div
-        className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-4 md:px-12"
-        style={{ maxWidth: 860 }}
+        className="flex h-full min-h-0 flex-col justify-center overflow-hidden px-20 py-10"
+        style={{ maxWidth: 560, margin: "0 auto" }}
       >
-        <div className="mx-auto w-full max-w-[780px]">
+        <div style={{ minHeight: 0 }}>
           <p
             style={{
               fontFamily: "Geist Mono, monospace",
-              fontSize: 11,
-              color: "var(--text-muted)",
-              marginBottom: 24,
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#888888",
+              letterSpacing: "0.12em",
+              marginBottom: 20,
+              marginTop: 0,
             }}
           >
-            Solaura  /  Why It Works
+            WHAT THE ALTERNATIVES COST
           </p>
-
-          <h2
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {BARS.map((bar) => (
+              <div key={bar.name} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span
+                    style={{
+                      fontFamily: "system-ui, sans-serif",
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "#111111",
+                    }}
+                  >
+                    {bar.name}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "system-ui, sans-serif",
+                      fontSize: bar.name === "Solaura" ? 12 : 17,
+                      fontWeight: bar.name === "Solaura" ? 700 : 800,
+                      color: bar.name === "Solaura" ? "#00cc88" : "#ff4444",
+                    }}
+                  >
+                    {bar.name === "Solaura"
+                      ? "$0 hardware · API costs cents per session"
+                      : bar.price}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: 8,
+                    background: "#f0f0f0",
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    minWidth: 140,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${barMounted ? bar.width : 0}%`,
+                      height: "100%",
+                      borderRadius: 4,
+                      background: bar.bg,
+                      transition: "width 1.2s ease-out",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div
             style={{
-              fontFamily: "Geist, system-ui, sans-serif",
-              fontWeight: 600,
-              fontSize: 32,
-              lineHeight: 1.3,
-              color: "var(--text)",
-              margin: 0,
+              marginTop: 20,
+              background: "#f0fdf8",
+              border: "1px solid #00cc88",
+              borderRadius: 10,
+              padding: "16px 20px",
             }}
           >
-            The sensor is already
-            <br />
-            in your pocket.
-          </h2>
-
+            <p
+              style={{
+                fontFamily: "system-ui, sans-serif",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#111111",
+                margin: 0,
+                lineHeight: 1.3,
+              }}
+            >
+              Zero hardware cost.
+            </p>
+            <p
+              style={{
+                fontFamily: "system-ui, sans-serif",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "#555555",
+                marginTop: 6,
+                marginBottom: 0,
+                lineHeight: 1.3,
+              }}
+            >
+              Gemini + ElevenLabs — cents per session.
+            </p>
+          </div>
           <p
             style={{
-              fontFamily: "Geist, system-ui, sans-serif",
-              fontSize: 16,
-              lineHeight: 1.75,
-              color: "var(--text-muted)",
-              marginTop: 24,
-              maxWidth: 480,
+              fontFamily: "Geist Mono, monospace",
+              fontSize: 9,
+              color: "#bbbbbb",
+              marginTop: 10,
+              marginBottom: 0,
             }}
           >
-            iPhone Pro has included LiDAR since 2020.
-            <br />
-            Solaura runs on hardware over 1 billion
-            <br />
-            people already own.
+            OrCam.com · PMC 12178407 · BuzzClip.com · IEEE Xplore · Apple
           </p>
-
-          <div className="mt-8 flex flex-col gap-px sm:flex-row">
-            <div
-              style={{
-                flex: 1,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 6,
-                padding: 24,
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "Geist Mono, monospace",
-                  fontSize: 11,
-                  color: "var(--text-label)",
-                  margin: 0,
-                  marginBottom: 16,
-                }}
-              >
-                WITHOUT SOLAURA
-              </p>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                {WITHOUT.map((item) => (
-                  <li
-                    key={item}
-                    style={{
-                      fontFamily: "Geist, system-ui, sans-serif",
-                      fontSize: 14,
-                      lineHeight: 2,
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    <span style={{ color: "var(--danger)" }}>●</span> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div
-              style={{
-                flex: 1,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 6,
-                padding: 24,
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "Geist Mono, monospace",
-                  fontSize: 11,
-                  color: "var(--cyan)",
-                  margin: 0,
-                  marginBottom: 16,
-                }}
-              >
-                WITH SOLAURA
-              </p>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                {WITH_SOLAURA.map((item) => (
-                  <li
-                    key={item}
-                    style={{
-                      fontFamily: "Geist, system-ui, sans-serif",
-                      fontSize: 14,
-                      lineHeight: 2,
-                      color: "var(--text)",
-                    }}
-                  >
-                    <span style={{ color: "var(--success)" }}>●</span> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: 32,
-              background: "var(--surface)",
-              borderLeft: "3px solid var(--cyan)",
-              borderRadius: 6,
-              padding: "14px 18px",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "Geist, system-ui, sans-serif",
-                fontWeight: 500,
-                fontSize: 15,
-                color: "var(--text)",
-                margin: 0,
-                lineHeight: 1.6,
-              }}
-            >
-              6 peer-reviewed systems confirm LiDAR +
-              <br />
-              directional audio works offline.
-              <br />
-              The brain is already wired to process it.
-              <br />
-              The sensor is already in the phone.
-              <br />
-              Solaura connects them.
-            </p>
-          </div>
-
-          <div
-            style={{
-              marginTop: 16,
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: 6,
-              padding: 16,
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "Geist Mono, monospace",
-                fontSize: 10,
-                color: "var(--text-label)",
-                margin: 0,
-                marginBottom: 12,
-              }}
-            >
-              COMPETITOR PRICING REFERENCE
-            </p>
-            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border)", padding: "10px 0" }}>
-              <span style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 500, fontSize: 14 }}>OrCam MyEye 2</span>
-              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 13, color: "var(--danger)" }}>~$4,000–$5,000</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border)", padding: "10px 0" }}>
-              <span style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 500, fontSize: 14 }}>WeWALK / BuzzClip (ultrasonic)</span>
-              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 13, color: "var(--danger)" }}>~$500–$800</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
-              <span style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 500, fontSize: 14 }}>Smart Vision Glasses (LiDAR)</span>
-              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 13, color: "var(--danger)" }}>~$360</span>
-            </div>
-            <p
-              style={{
-                fontFamily: "Geist Mono, monospace",
-                fontSize: 10,
-                color: "#4cc38a",
-                margin: "12px 0 0",
-              }}
-            >
-              Solaura: $0 additional hardware required.
-            </p>
-            <p
-              style={{
-                fontFamily: "Geist Mono, monospace",
-                fontSize: 9,
-                color: "var(--text-label)",
-                marginTop: 8,
-                marginBottom: 0,
-              }}
-            >
-              Sources: OrCam.com · PMC 12178407 · BuzzClip.com · IEEE Xplore
-            </p>
-          </div>
         </div>
       </div>
     </PageShell>

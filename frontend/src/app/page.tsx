@@ -1,174 +1,131 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { PageShell } from "./components/PageShell";
 
-const STATS = [
-  { number: "43M", label: "people living with blindness globally", source: "WHO · 2024", color: "var(--cyan)" },
-  { number: "295M", label: "severe vision loss — rising to 474M by 2050", source: "IAPB Vision Atlas · 2021", color: "var(--cyan)" },
-  { number: "$411B", label: "lost in global productivity every year", source: "WHO Global Report", color: "var(--cyan)" },
+const CHIPS = [
+  { number: "43M", label: "living in darkness", source: "WHO · 2024" },
+  { number: "$411B", label: "lost every year. to silence.", source: "WHO Global Report" },
+  { number: "474M", label: "projected by 2050 — and rising", source: "IAPB · 2021" },
 ];
 
-export default function Page1HumanCost() {
-  const [headline, setHeadline] = useState(false);
-  const [subtext, setSubtext] = useState(false);
-  const [stats, setStats] = useState(false);
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setHeadline(true), 0);
-    const t2 = setTimeout(() => setSubtext(true), 300);
-    const t3 = setTimeout(() => setStats(true), 600);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, []);
-
+export default function Page1() {
   return (
-    <PageShell pageNum={1} totalPages={5} nextHref="/problem" prevHref={null} nextVisibleDelay={900}>
+    <PageShell
+      pageNum={1}
+      totalPages={7}
+      nextHref="/problem"
+      prevHref={null}
+      breadcrumb="Solaura / The Problem"
+    >
       <div
-        className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-4 md:px-12"
-        style={{ maxWidth: 860 }}
+        className="flex flex-col justify-center overflow-hidden px-20 pt-20 pb-24"
+        style={{ maxWidth: 1100, margin: "0 auto", height: "100vh" }}
       >
-        <div className="mx-auto w-full max-w-[720px]">
-          <p
-            style={{
-              fontFamily: "Geist Mono, monospace",
-              fontSize: 11,
-              color: "var(--text-muted)",
-              marginBottom: 24,
-            }}
-          >
-            Solaura  /  The Problem
-          </p>
+        <h1
+          style={{
+            fontFamily: "system-ui, sans-serif",
+            fontSize: "clamp(52px, 7.5vw, 88px)",
+            fontWeight: 800,
+            lineHeight: 1.0,
+            letterSpacing: "-0.03em",
+            color: "#111111",
+            margin: 0,
+          }}
+        >
+          2.2 billion people
+          <br />
+          live in a world
+          <br />
+          <span style={{ color: "#aaaaaa" }}>not built for them.</span>
+        </h1>
 
-          <div
-            style={{
-              opacity: headline ? 1 : 0,
-              transform: headline ? "translateY(0)" : "translateY(12px)",
-              transition: "opacity 500ms ease-out, transform 500ms ease-out",
-            }}
-          >
-            <h1
+        <div style={{ marginTop: 36 }} />
+
+        <p
+          style={{
+            fontFamily: "system-ui, sans-serif",
+            fontSize: 18,
+            fontWeight: 400,
+            color: "#555555",
+            lineHeight: 1.75,
+            maxWidth: 500,
+            margin: 0,
+          }}
+        >
+          43 million are completely blind.
+          <br />
+          295 million more live with severe vision loss.
+          <br />
+          The space directly in front of them — invisible.
+        </p>
+
+        <div style={{ marginTop: 44 }} />
+
+        <div className="flex flex-wrap gap-4" style={{ gap: 16 }}>
+          {CHIPS.map((chip) => (
+            <div
+              key={chip.number}
               style={{
-                fontFamily: "Geist, system-ui, sans-serif",
-                fontWeight: 700,
-                fontSize: 56,
-                lineHeight: 1.15,
-                letterSpacing: "-0.02em",
-                color: "var(--text)",
-                margin: 0,
+                border: "1px solid #efefef",
+                borderRadius: 12,
+                padding: "20px 28px",
+                background: "#fafafa",
+                minWidth: 155,
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
               }}
             >
-              2.2 billion people
-              <br />
-              live with vision
-              <br />
-              impairment.
-            </h1>
-          </div>
-
-          <div
-            style={{
-              marginTop: 24,
-              maxWidth: 520,
-              opacity: subtext ? 1 : 0,
-              transform: subtext ? "translateY(0)" : "translateY(12px)",
-              transition: "opacity 500ms ease-out, transform 500ms ease-out",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "Geist, system-ui, sans-serif",
-                fontSize: 16,
-                fontWeight: 400,
-                lineHeight: 1.75,
-                color: "var(--text-muted)",
-                margin: 0,
-              }}
-            >
-              43 million are completely blind.
-              <br />
-              295 million more live with severe vision loss.
-              <br />
-              By 2050 those numbers rise to 61 million
-              <br />
-              and 474 million.
-              <br />
-              The space in front of them is invisible.
-            </p>
-          </div>
-
-          <div
-            className="mt-8 flex flex-wrap gap-3"
-            style={{
-              opacity: stats ? 1 : 0,
-              transform: stats ? "translateY(0)" : "translateY(12px)",
-              transition: "opacity 500ms ease-out, transform 500ms ease-out",
-            }}
-          >
-            {STATS.map((stat, i) => (
               <div
-                key={stat.label}
                 style={{
-                  flex: "1 1 140px",
-                  minWidth: 140,
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 6,
-                  padding: "16px 20px",
-                  opacity: stats ? 1 : 0,
-                  transform: stats ? "translateY(0)" : "translateY(12px)",
-                  transition: `opacity 500ms ease-out ${i * 100}ms, transform 500ms ease-out ${i * 100}ms`,
+                  fontFamily: "system-ui, sans-serif",
+                  fontSize: 32,
+                  fontWeight: 800,
+                  color: "#00e5ff",
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1,
                 }}
               >
-                <div
-                  style={{
-                    fontFamily: "Geist, system-ui, sans-serif",
-                    fontWeight: 700,
-                    fontSize: 36,
-                    color: stat.color,
-                  }}
-                >
-                  {stat.number}
-                </div>
-                <p
-                  style={{
-                    fontFamily: "Geist, system-ui, sans-serif",
-                    fontSize: 15,
-                    lineHeight: 1.75,
-                    color: "var(--text-muted)",
-                    margin: "4px 0 0",
-                  }}
-                >
-                  {stat.label}
-                </p>
-                <p
-                  style={{
-                    fontFamily: "Geist Mono, monospace",
-                    fontSize: 10,
-                    color: "var(--text-muted)",
-                    margin: "4px 0 0",
-                  }}
-                >
-                  {stat.source}
-                </p>
+                {chip.number}
               </div>
-            ))}
-          </div>
-
-          <p
-            style={{
-              fontFamily: "Geist Mono, monospace",
-              fontSize: 10,
-              color: "var(--text-muted)",
-              marginTop: 24,
-            }}
-          >
-            Source: WHO Blindness & Vision Impairment Fact Sheet 2024 · IAPB Vision Atlas 2021
-          </p>
+              <p
+                style={{
+                  fontFamily: "system-ui, sans-serif",
+                  fontSize: 12,
+                  color: "#888888",
+                  lineHeight: 1.4,
+                  marginTop: 4,
+                  marginBottom: 0,
+                }}
+              >
+                {chip.label}
+              </p>
+              <p
+                style={{
+                  fontFamily: "Geist Mono, monospace",
+                  fontSize: 9,
+                  color: "#bbbbbb",
+                  marginTop: 6,
+                  marginBottom: 0,
+                }}
+              >
+                {chip.source}
+              </p>
+            </div>
+          ))}
         </div>
+
+        <p
+          style={{
+            fontFamily: "Geist Mono, monospace",
+            fontSize: 10,
+            color: "#bbbbbb",
+            marginTop: 28,
+            marginBottom: 0,
+          }}
+        >
+          WHO Blindness & Vision Impairment Fact Sheet 2024 · IAPB Vision Atlas 2021
+        </p>
       </div>
     </PageShell>
   );

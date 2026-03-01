@@ -111,15 +111,15 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
             <Card
               label="Spatial Sensing"
-              body="LiDAR maps the space in front of you in real time."
+              body="LiDAR reads the room. Instantly."
             />
             <Card
               label="Directional Audio"
-              body="A beep tells you where. Closer means louder. That's it."
+              body="Closer means louder. Left means left. That's the whole interface."
             />
             <Card
               label="No Dependencies"
-              body="No cloud. No assistant. Works in airplane mode."
+              body="No cloud. No assistant. No signal needed. Just you and the sound."
             />
           </div>
         </section>
@@ -133,7 +133,7 @@ export default function LandingPage() {
               className={`text-3xl font-bold tracking-tight md:text-4xl ${spaceMono.className}`}
               style={{ color: "#171717" }}
             >
-              Ready to perceive beyond sight?
+              Ready to hear the room?
             </h2>
             <Link
               href="/dashboard"
@@ -150,7 +150,7 @@ export default function LandingPage() {
                 e.currentTarget.style.backgroundColor = "transparent";
               }}
             >
-              Launch Dashboard
+              Ready to hear the room?
             </Link>
             <p className="mt-6 text-xs text-zinc-500">
               Core spatial sensing confirmed. Running offline on existing hardware.
