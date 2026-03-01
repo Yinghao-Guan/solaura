@@ -210,3 +210,5 @@ xcuserdata/
 **/xcshareddata/WorkspaceSettings.xcsettings
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,jetbrains,xcode,visualstudiocode
+node_modules/
+.next/
