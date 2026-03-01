@@ -65,15 +65,23 @@ struct ContentView: View {
     }
     
     // 开始按住录音
-    private func startInteraction() {
-        // 为了防止杂音和性能冲突，录音时强制关闭雷达
-        appState.isRadarActive = false
-        appState.uiStatus = "Listening..."
-        
-        voice.startListening { finalResult in
-            // 处理异常中断的情况，主逻辑在 endInteraction
+        private func startInteraction() {
+            // 1. 强制切断雷达 UI 状态
+            appState.isRadarActive = false
+            
+            // 2. 瞬间打断 Gemini 正在逼逼叨的语音
+            voice.stopSpeaking()
+            
+            // 3. 瞬间静音！向 Python 发送强制丢失信号，打破它的 2 秒记忆续命。
+            // 这样你电脑/音响里的滴滴声也会立刻停止，绝不会录进手机麦克风！
+            UdpSender.shared.send(jsonObject: ["mode": "bottle_miss"])
+            
+            appState.uiStatus = "Listening..."
+            
+            voice.startListening { finalResult in
+                // 处理异常中断的情况，主逻辑在 endInteraction
+            }
         }
-    }
     
     // 松手，发送给大模型
     private func endInteraction() {

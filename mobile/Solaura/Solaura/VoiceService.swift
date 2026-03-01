@@ -46,6 +46,13 @@ class VoiceService: ObservableObject {
         synthesizer.speak(utterance)
     }
     
+    // 🛑 强制打断正在播放的语音
+        func stopSpeaking() {
+            if synthesizer.isSpeaking {
+                synthesizer.stopSpeaking(at: .immediate)
+            }
+        }
+    
     // 👂 耳朵：开始听你说话
     func startListening(onResult: @escaping (String) -> Void) {
         if audioEngine.isRunning {
