@@ -26,7 +26,7 @@ export default function Page1HumanCost() {
   }, []);
 
   return (
-    <PageShell pageNum={1} totalPages={5} nextHref="/problem" prevHref={null} nextVisibleDelay={900}>
+    <PageShell pageNum={1} totalPages={7} nextHref="/problem" prevHref={null} nextVisibleDelay={900}>
       <div
         className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-4 md:px-12"
         style={{ maxWidth: 860 }}

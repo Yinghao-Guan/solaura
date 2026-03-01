@@ -45,7 +45,7 @@ export default function LandingPage() {
           letterSpacing: "0.2em",
         }}
       >
-        05 / 05
+        06 / 07
       </div>
       <Link
         href="/proof"
@@ -53,10 +53,21 @@ export default function LandingPage() {
         style={{
           fontFamily: "Geist, system-ui, sans-serif",
           fontSize: 14,
-          color: CYAN,
+          color: MUTED,
         }}
       >
         ← Back
+      </Link>
+      <Link
+        href="/go"
+        className="fixed bottom-0 right-0 z-[9999] pb-7 pr-8 transition-opacity hover:opacity-80"
+        style={{
+          fontFamily: "Geist, system-ui, sans-serif",
+          fontSize: 14,
+          color: CYAN,
+        }}
+      >
+        Next →
       </Link>
       <div
         className="min-h-screen text-zinc-900"

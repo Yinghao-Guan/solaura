@@ -20,8 +20,8 @@ export default function GoToDashboardPage() {
 
   return (
     <PageShell
-      pageNum={6}
-      totalPages={6}
+      pageNum={7}
+      totalPages={7}
       nextHref="/dashboard"
       prevHref="/demo"
     >

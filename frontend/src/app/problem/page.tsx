@@ -22,7 +22,7 @@ const TABLE_ROWS = [
 
 export default function Page2TheGap() {
   return (
-    <PageShell pageNum={2} totalPages={5} nextHref="/solution" prevHref="/">
+    <PageShell pageNum={2} totalPages={7} nextHref="/solution" prevHref="/">
       <div
         className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-4 md:px-12"
         style={{ maxWidth: 860 }}

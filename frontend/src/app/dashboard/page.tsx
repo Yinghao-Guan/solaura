@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -73,6 +74,42 @@ export default function DashboardPage() {
   }, []);
 
   return (
+    <>
+      {/* ── Page navigation overlay ── */}
+      <div
+        className="fixed left-1/2 top-0 z-[9999] -translate-x-1/2 py-6 text-center"
+        style={{
+          fontFamily: "Geist Mono, monospace",
+          fontSize: 11,
+          color: "rgba(180, 160, 255, 0.45)",
+          letterSpacing: "0.15em",
+        }}
+      >
+        04 / 07
+      </div>
+      <Link
+        href="/solution"
+        className="fixed bottom-0 left-0 z-[9999] pb-8 pl-8 transition-opacity hover:opacity-80"
+        style={{
+          fontFamily: "Geist, system-ui, sans-serif",
+          fontSize: 14,
+          color: "rgba(255,255,255,0.35)",
+        }}
+      >
+        ← Back
+      </Link>
+      <Link
+        href="/proof"
+        className="fixed bottom-0 right-0 z-[9999] pb-8 pr-8 transition-opacity hover:opacity-80"
+        style={{
+          fontFamily: "Geist, system-ui, sans-serif",
+          fontSize: 14,
+          color: "#0891b2",
+        }}
+      >
+        Next →
+      </Link>
+
     <main
       style={{
         height: "100vh",
@@ -148,6 +185,7 @@ export default function DashboardPage() {
 
 
     </main>
+    </>
   );
 }
 

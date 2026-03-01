@@ -20,7 +20,7 @@ const WITH_SOLAURA = [
 
 export default function Page4TheProof() {
   return (
-    <PageShell pageNum={4} totalPages={5} nextHref="/demo" prevHref="/solution">
+    <PageShell pageNum={5} totalPages={7} nextHref="/demo" prevHref="/dashboard">
       <div
         className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-4 md:px-12"
         style={{ maxWidth: 860 }}
