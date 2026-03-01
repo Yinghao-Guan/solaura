@@ -85,7 +85,7 @@ export default function DashboardPage() {
           letterSpacing: "0.15em",
         }}
       >
-        04 / 07
+        04 / 06
       </div>
       <Link
         href="/solution"

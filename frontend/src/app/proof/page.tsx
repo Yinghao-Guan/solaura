@@ -22,8 +22,8 @@ export default function Page4TheProof() {
   return (
     <PageShell
       pageNum={5}
-      totalPages={7}
-      nextHref="/demo"
+      totalPages={6}
+      nextHref="/go"
       prevHref="/dashboard"
       theme="dark"
       backgroundColor="#090620ff"

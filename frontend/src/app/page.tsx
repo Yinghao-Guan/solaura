@@ -15,7 +15,7 @@ export default function HomePage() {
           letterSpacing: "0.15em",
         }}
       >
-        01 / 07
+        01 / 06
       </div>
       <Link
         href="/problem"

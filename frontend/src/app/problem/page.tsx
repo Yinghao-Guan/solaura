@@ -57,7 +57,7 @@ export default function Page2TheGap() {
           letterSpacing: "0.15em",
         }}
       >
-        02 / 07
+        02 / 06
       </div>
       <Link
         href="/"

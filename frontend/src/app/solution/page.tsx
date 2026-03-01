@@ -21,7 +21,7 @@ export default function Page3WhatWeBuilt() {
           letterSpacing: "0.15em",
         }}
       >
-        03 / 07
+        03 / 06
       </div>
       <Link
         href="/problem"
