@@ -1,37 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050508;
-  --foreground: #e4e4e7;
-  --accent: #22d3ee;
-  --accent-muted: #0891b2;
-  --surface: #0f0f14;
-  --card: #14141c;
-  --border: #27272a;
+  --bg: #ffffff;
+  --surface: #fafafa;
+  --surface-2: #f0f0f0;
+  --border: #e5e5e5;
+  --border-cyan: rgba(8, 145, 178, 0.2);
+  --text: #171717;
+  --text-muted: #525252;
+  --text-label: #737373;
+  --cyan: #0891b2;
+  --amber: #d97706;
+  --success: #059669;
+  --danger: #dc2626;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Geist", system-ui, -apple-system, sans-serif;
 }
 
-/* Subtle grid overlay for high-tech feel */
-.bg-grid-pattern {
-  background-image: 
-    linear-gradient(rgba(34, 211, 238, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
-/* Glow effect for accents */
-.glow-cyan {
-  box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+.table-row-hover:hover {
+  background: var(--surface-2);
 }
