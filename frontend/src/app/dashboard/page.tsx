@@ -238,13 +238,11 @@ function TerrainCanvas() {
     const HALF       = (GRID - 1) * SPACING * 0.5;
 
     const SOURCE_PALETTE = [
-      { color: 0x00d4ff },
-      { color: 0xff4d8f },
+      { color: 0x00d4ff },   // bottle marker — cyan
     ];
 
     const FIXED_POSITIONS = [
-      { x:  2.0, z:  -2.0 },
-      { x: -4.0, z:  0.0 },
+      { x: 0.0, z: 0.0 },   // bottle — starts at centre, moved by live data
     ];
 
     // ── Renderer ──────────────────────────────────────────────────────────────
