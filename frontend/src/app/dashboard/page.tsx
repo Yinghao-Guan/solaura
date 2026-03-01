@@ -324,7 +324,7 @@ function TerrainCanvas() {
       );
       marker.position.set(pos.x, 0.1, pos.z);
       scene.add(marker);
-      sources.push({ x: pos.x, z: pos.z, intensity: 0.9, marker });
+      sources.push({ x: pos.x, z: pos.z, intensity: 0.0, marker });
     });
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -375,8 +375,7 @@ function TerrainCanvas() {
           height += sourceInfluence(src.x, src.z, src.intensity, px, pz);
         }
 
-        const undulation = Math.sin(px * 1.2 + t * 0.4) * Math.cos(pz * 1.0 - t * 0.3) * 0.05;
-        targetY[i] = Math.min(height * MAX_HEIGHT + undulation, MAX_HEIGHT);
+        targetY[i] = Math.min(height * MAX_HEIGHT, MAX_HEIGHT);
       }
 
       // smooth + write color
