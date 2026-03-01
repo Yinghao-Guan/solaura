@@ -146,18 +146,6 @@ export default function DashboardPage() {
         <TerrainCanvas />
       </section>
 
-      {/* RIGHT — live feed */}
-      <section
-        style={{
-          flex: 2,
-          padding: "24px 20px",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <Label>Live</Label>
-        <Placeholder />
-      </section>
 
     </main>
   );
