@@ -43,7 +43,7 @@ The web app will be available at `http://localhost:3000`.
 Navigate to the `backend/` directory. Ensure you have the necessary libraries installed (like `ultralytics` for YOLO, and relevant audio processing libraries), then start the receiver:
 ```bash
 cd backend
-python receiver.py
+python audio_m1p5.py
 ```
 
 #### 3. iOS Mobile App
