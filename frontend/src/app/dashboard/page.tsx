@@ -3,13 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
+// World-space range shown in canvas: ±WORLD_RANGE metres
+const WORLD_RANGE = 1.5;
 // Must match HALF in TerrainCanvas (= (GRID-1)*SPACING*0.5 = 79*0.18*0.5)
 const CANVAS_HALF = 7.11;
-// Azimuth ±25° fills the full canvas width (amplifies far objects naturally)
-const AZ_SCALE    = CANVAS_HALF / (Math.PI / 7.2);
-// Camera sphere sits at canvas z=5; 1.5 m forward reaches the top (-CANVAS_HALF)
-const CAM_SPHERE_Z = 5;
-const DEPTH_SCALE  = (CAM_SPHERE_Z + CANVAS_HALF) / 1.5;  // ~8.1
+const WORLD_TO_CANVAS = CANVAS_HALF / WORLD_RANGE;
 
 export default function DashboardPage() {
   const [coords, setCoords] = useState<[number, number, number] | null>(null);
@@ -22,14 +20,16 @@ export default function DashboardPage() {
         const res = await fetch("http://localhost:8765/state");
         const data = await res.json();
 
-        if (data.cam_pos && data.target_pos && data.cam_offset && data.az != null) {
+        if (data.cam_pos && data.target_pos && data.cam_offset) {
           const [cx, cy, cz]: number[] = data.cam_pos;
           const [tx, ty, tz]: number[] = data.target_pos;
           const dx = tx - cx, dy = ty - cy, dz = tz - cz;
           const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-          const az: number   = data.az;    // azimuth (rad) – left/right angle
-          const dist: number = data.dist;  // 3-D distance (m)
+          // cam_offset = world vector rotated into camera frame
+          // v_c[1] = left/right (same as audio azimuth uses)
+          // v_c[2] = forward/back (-Z is forward in camera frame)
+          const [, vy_cam, vz_cam]: number[] = data.cam_offset;
 
           setCoords([dx, dy, dz]);
           setIsActive(data.is_active);
@@ -37,12 +37,11 @@ export default function DashboardPage() {
 
           if (typeof (window as any).setSource === "function") {
             (window as any).setSource(0, {
-              // azimuth-based X: same angle = same position regardless of dist
-              x: az * AZ_SCALE,
-              // depth-based Z: 0 m = camera sphere, 3 m = top of canvas
-              z: CAM_SPHERE_Z - dist * DEPTH_SCALE,
+              x:  vy_cam * WORLD_TO_CANVAS,  // camera Y → canvas X (left/right)
+              z:  vz_cam * WORLD_TO_CANVAS,  // camera Z → canvas Z (fwd=-Z=upper)
               intensity: data.is_active ? 0.9 : 0.0,
             });
+            // Hide second fixed source
             (window as any).setSource(1, { intensity: 0.0 });
           }
         } else {
@@ -262,7 +261,7 @@ function TerrainCanvas() {
 
     // ── Scene / Camera ────────────────────────────────────────────────────────
     const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(20, 1, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(72, 1, 0.1, 100);
     camera.position.set(0, 3, 13);
     camera.lookAt(0, 0, 0);
 
