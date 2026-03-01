@@ -302,15 +302,21 @@ function TerrainCanvas() {
       sizeAttenuation: true,
     })));
 
-    // ── Center sphere — smaller ───────────────────────────────────────────────
-    scene.add(new THREE.Mesh(
+    // ── Camera sphere (moved toward viewer = lower on screen) ─────────────────
+    const camSpherePos = new THREE.Vector3(0, 0.1, 5);
+    const camSphereOuter = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 48, 48),
       new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.10, wireframe: true })
-    ));
-    scene.add(new THREE.Mesh(
+    );
+    camSphereOuter.position.copy(camSpherePos);
+    scene.add(camSphereOuter);
+
+    const camSphereInner = new THREE.Mesh(
       new THREE.SphereGeometry(0.26, 32, 32),
       new THREE.MeshBasicMaterial({ color: 0xbbaaff, transparent: true, opacity: 0.12 })
-    ));
+    );
+    camSphereInner.position.copy(camSpherePos);
+    scene.add(camSphereInner);
 
     // ── Sources ───────────────────────────────────────────────────────────────
     const sources: { x: number; z: number; intensity: number; marker: THREE.Mesh }[] = [];
