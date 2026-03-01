@@ -3,7 +3,6 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import numpy as np
 import sounddevice as sd
 
-from filter import EMA3
 from state import TargetState
 
 UDP_IP = "0.0.0.0"
@@ -38,8 +37,7 @@ def world_to_camera(v_w, cam_quat_xyzw):
 def azimuth_from_vc(v_c):
     y_axis = float(v_c[1])
     z = float(v_c[2])
-    az = math.atan2(y_axis, -z)
-    return az
+    return math.atan2(y_axis, -z)
 
 
 def pan_from_az(az):
@@ -57,25 +55,35 @@ def distance_to_interval(d):
     d = clamp(d, min_dist, max_dist)
     ratio = (d - min_dist) / (max_dist - min_dist)
     curve_ratio = ratio ** 2.0
-    min_interval = 0.07
-    max_interval = 0.50
-    return min_interval + curve_ratio * (max_interval - min_interval)
+    return 0.07 + curve_ratio * (0.50 - 0.07)
 
 
 def stereo_gains(pan):
     pan = clamp(pan, -1.0, 1.0)
     angle = (pan + 1.0) * math.pi / 4.0
-    L = math.cos(angle)
-    R = math.sin(angle)
-    return L, R
+    return math.cos(angle), math.sin(angle)
 
 
 def make_beep(pan, d):
     d_clamped = clamp(d, 0.2, 1.5)
     ratio = (1.5 - d_clamped) / (1.5 - 0.2)
     dynamic_hz = 400.0 + (ratio * 1100.0)
-    t = np.arange(int(SR * BEEP_LEN), dtype=np.float32) / SR
+
+    N = int(SR * BEEP_LEN)
+    t = np.arange(N, dtype=np.float32) / SR
     wave = (np.sin(2 * math.pi * dynamic_hz * t).astype(np.float32)) * VOL
+
+    # ==========================================
+    # 🚀 修复 1：ADSR 声音包络 (Envelope)
+    # 增加 5 毫秒的极速淡入淡出，彻底消除音频相位的“啪啪”断裂杂音
+    # ==========================================
+    fade_len = int(SR * 0.005)
+    envelope = np.ones(N, dtype=np.float32)
+    if N > fade_len * 2:
+        envelope[:fade_len] = np.linspace(0, 1, fade_len, dtype=np.float32)
+        envelope[-fade_len:] = np.linspace(1, 0, fade_len, dtype=np.float32)
+    wave *= envelope
+
     L, R = stereo_gains(pan)
     return np.ascontiguousarray(np.stack([wave * L, wave * R], axis=1))
 
@@ -155,60 +163,64 @@ state_lock = threading.Lock()
 latest_state = {
     "cam_pos": None,
     "cam_quat": None,
-    "target_pos": None,
+    "raw_target_pos": None,  # YOLO 传来的 5Hz 跳跃坐标
+    "target_pos": None,  # EMA 平滑后的 30Hz 丝滑坐标
     "is_active": False,
-    "last_target_update": 0.0  # 记录收到目标的时间，用于触发状态机
+    "last_target_update": 0.0
 }
 
 
 def udp_listener_thread():
-    """独立线程：疯狂无阻塞地读取 UDP，只保存最新状态，果断丢弃积压包"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((UDP_IP, UDP_PORT))
     print(f"[OK] UDP Listener thread running on {UDP_IP}:{UDP_PORT}")
 
     while True:
         try:
-            # 阻塞接收，一旦有数据瞬间唤醒
             data, _ = sock.recvfrom(65535)
             now = time.time()
             text = data.decode("utf-8", errors="replace").strip()
-
-            if '"mode"' not in text:
-                continue
+            if '"mode"' not in text: continue
 
             msg = json.loads(text)
             mode = msg.get("mode")
 
-            # 加锁更新最新状态
             with state_lock:
-                # 1. 更新相机位姿 (30Hz 会频繁更新)
-                cam = msg.get("cam")
-                if cam is not None and cam.get("pos") and cam.get("quat"):
-                    latest_state["cam_pos"] = np.array(cam.get("pos"), np.float32)
-                    latest_state["cam_quat"] = np.array(cam.get("quat"), np.float32)
+                if mode == "pose":
+                    cam = msg.get("cam")
+                    if cam is not None and cam.get("pos") and cam.get("quat"):
+                        latest_state["cam_pos"] = np.array(cam.get("pos"), np.float32)
+                        latest_state["cam_quat"] = np.array(cam.get("quat"), np.float32)
 
-                # 2. 更新目标状态
-                if mode in ("tap_miss", "bottle_miss"):
+                        # 在接收 pose (30Hz) 的稳定节拍下进行 EMA 滤波
+                        # 这样即使瓶子坐标 200 毫秒才更新一次，系统也会在期间顺滑地“滑”过去
+                        raw_pos = latest_state["raw_target_pos"]
+                        curr_pos = latest_state["target_pos"]
+                        if raw_pos is not None:
+                            if curr_pos is None:
+                                latest_state["target_pos"] = raw_pos.copy()
+                            else:
+                                alpha = 0.15  # 0.15 完美平衡了“延迟感”和“顺滑感”
+                                latest_state["target_pos"] = curr_pos * (1.0 - alpha) + raw_pos * alpha
+
+                elif mode in ("tap_miss", "bottle_miss"):
                     latest_state["is_active"] = False
                 else:
                     parsed = extract_target(msg)
                     if parsed is not None:
-                        target_pos, _, _ = parsed
-                        latest_state["target_pos"] = target_pos
+                        target_pos, c_pos, c_quat = parsed
+                        latest_state["raw_target_pos"] = target_pos  # 只更新 raw，不干扰 target_pos 的顺滑滑动
                         latest_state["is_active"] = True
                         latest_state["last_target_update"] = now
 
+                        if c_pos is not None:
+                            latest_state["cam_pos"] = c_pos
+                            latest_state["cam_quat"] = c_quat
         except Exception:
             pass
 
 
 def main(mode="live", replay_path=None, replay_speed=1.0):
-    if mode != "live":
-        print("[Error] 此脚本已被优化为多线程Live模式，如果需要 replay 请使用旧版脚本。")
-        return
-
-    # 启动后台收包线程
     t = threading.Thread(target=udp_listener_thread, daemon=True)
     t.start()
 
@@ -219,9 +231,8 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
 
     ema_vw = EMA3(alpha=0.25)
     st = TargetState(timeout_s=2.0)
-
     last_beep_t = 0.0
-    main_last_target_update = 0.0  # 用于追踪状态机是否需要触发 on_target
+    main_last_target_update = 0.0
 
     print("[TIP] Tap -> immediate beep. No new target for 2s -> silence.")
 
@@ -229,20 +240,17 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
         while True:
             now = time.time()
 
-            # 1. 安全地拉取最新一帧的状态
             with state_lock:
                 cam_pos = latest_state["cam_pos"]
                 cam_quat = latest_state["cam_quat"]
-                target_pos = latest_state["target_pos"]
+                target_pos = latest_state["target_pos"]  # 直接取用丝滑状态
                 is_active = latest_state["is_active"]
                 target_update_time = latest_state["last_target_update"]
 
-            # 2. 状态机逻辑（更新 Target 存活状态）
             if is_active and target_pos is not None:
-                # 只有发现新目标时间戳时，才触发 on_target
                 if target_update_time > main_last_target_update:
                     if not st.should_sound():
-                        last_beep_t = 0.0  # 瞬间发声
+                        last_beep_t = 0.0
                     st.on_target(target_update_time)
                     main_last_target_update = target_update_time
             else:
@@ -250,11 +258,10 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
 
             st.tick(now)
 
-            # 3. 计算方位并准备发声
             want = None
             if st.should_sound() and cam_pos is not None and target_pos is not None and cam_quat is not None:
+                # 🚀 修复 3：直接相减，抛弃在 while 循环中瞎跑的旧 EMA 滤波器
                 v_w = target_pos - cam_pos
-                v_w = ema_vw.update(v_w)
 
                 d = float(np.linalg.norm(v_w))
                 v_c = world_to_camera(v_w, cam_quat)
@@ -264,21 +271,15 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
 
                 want = (pan, interval, d, az)
 
-            # 4. 音频播放与时钟控制
             if want is not None:
                 pan, interval, d, az = want
                 if now - last_beep_t >= interval:
-                    # 注意：这一步会阻塞 0.06 秒，但这不再影响后台线程飞速收包！
                     stream.write(make_beep(pan, d))
                     last_beep_t = time.time()
                     print(f"az={az:+.2f} pan={pan:+.2f} dist={d:.2f}m int={interval:.2f}s")
             else:
-                # 如果当前不需要发声，主循环休眠极短时间防止 CPU 100% 占用
                 time.sleep(0.005)
 
 
 if __name__ == "__main__":
-    import sys
-
-    # 为了简化，这段优化后的代码仅专注 live 模式
     main(mode="live")

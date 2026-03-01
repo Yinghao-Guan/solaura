@@ -17,20 +17,13 @@ struct ARViewContainer: UIViewRepresentable {
         config.planeDetection = [.horizontal]
         
         // ==========================================
-        // 🚀 1. 开启 LiDAR 深度图和场景重建支持
+        // 🚀 1. 强制使用原生 SceneDepth (千万不要用 smoothed，会导致移动物体拖影)
         // ==========================================
         if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
-            // 优先使用平滑深度（滤除噪点，对单点采样更准确），不支持则用基础深度
-            if ARWorldTrackingConfiguration.supportsFrameSemantics(.smoothedSceneDepth) {
-                config.frameSemantics.insert(.smoothedSceneDepth)
-                print("✅ LiDAR Smoothed Scene Depth Enabled")
-            } else {
-                config.frameSemantics.insert(.sceneDepth)
-                print("✅ LiDAR Scene Depth Enabled")
-            }
+            config.frameSemantics.insert(.sceneDepth)
+            print("✅ LiDAR Scene Depth Enabled (Raw mode for moving objects)")
         }
         
-        // 开启环境网格重建，这会让底层的 raycast 也具备非平面碰撞能力
         if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
             config.sceneReconstruction = .mesh
             print("✅ LiDAR Scene Mesh Reconstruction Enabled")
@@ -160,23 +153,21 @@ struct ARViewContainer: UIViewRepresentable {
         }
 
         // ==========================================
-        // 🚀 2. LiDAR 提取核心：从深度图中反投影 3D 点
+        // 🚀 2. LiDAR 提取核心
         // ==========================================
         private func getLiDARDepthPoint(arView: ARView, screenPt: CGPoint) -> [Float]? {
             guard let frame = arView.session.currentFrame,
-                  let depthMap = frame.smoothedSceneDepth?.depthMap ?? frame.sceneDepth?.depthMap else {
+                  let depthMap = frame.sceneDepth?.depthMap else { // 强制使用实时 sceneDepth
                 return nil
             }
 
             let viewSize = arView.bounds.size
             guard viewSize.width > 0 && viewSize.height > 0 else { return nil }
 
-            // 1. 利用 displayTransform 将屏幕 UI 坐标准确映射回原始图像域
-            let scaleTransform = frame.displayTransform(for: .portrait, viewportSize: viewSize)
-            let invertedTransform = scaleTransform.inverted()
-            
+            // 1. 将 UI 坐标完美映射到 DepthMap 坐标系
             let normScreen = CGPoint(x: screenPt.x / viewSize.width, y: screenPt.y / viewSize.height)
-            let normImage = normScreen.applying(invertedTransform) // 范围 0~1
+            let invertedTransform = frame.displayTransform(for: .portrait, viewportSize: viewSize).inverted()
+            let normImage = normScreen.applying(invertedTransform)
 
             let depthWidth = CVPixelBufferGetWidth(depthMap)
             let depthHeight = CVPixelBufferGetHeight(depthMap)
@@ -184,31 +175,40 @@ struct ARViewContainer: UIViewRepresentable {
             let px = Int(normImage.x * CGFloat(depthWidth))
             let py = Int(normImage.y * CGFloat(depthHeight))
             
-            if px < 0 || px >= depthWidth || py < 0 || py >= depthHeight { return nil }
-            
-            // 2. 锁定内存，读取特定像素的 Float32 深度值（单位：米）
             CVPixelBufferLockBaseAddress(depthMap, .readOnly)
             defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
             
             let baseAddress = CVPixelBufferGetBaseAddress(depthMap)
-            let rowData = baseAddress!.advanced(by: py * CVPixelBufferGetBytesPerRow(depthMap))
-            let depth = rowData.assumingMemoryBound(to: Float32.self)[px]
+            let bytesPerRow = CVPixelBufferGetBytesPerRow(depthMap)
             
-            // 过滤无效或极端的深度值 (LiDAR 极限大约是 5 米)
-            if depth.isNaN || depth < 0.1 || depth > 5.0 {
-                return nil
+            // 🚀 核心优化：5x5 前景探测面，只取最小值 (最近的物体)，绝不穿透水瓶打背景
+            let windowSize = 2
+            var validDepths: [Float32] = []
+            
+            for dy in -windowSize...windowSize {
+                for dx in -windowSize...windowSize {
+                    let sampleX = px + dx
+                    let sampleY = py + dy
+                    if sampleX >= 0 && sampleX < depthWidth && sampleY >= 0 && sampleY < depthHeight {
+                        let rowData = baseAddress!.advanced(by: sampleY * bytesPerRow)
+                        let depth = rowData.assumingMemoryBound(to: Float32.self)[sampleX]
+                        if !depth.isNaN && depth >= 0.1 && depth <= 5.0 {
+                            validDepths.append(depth)
+                        }
+                    }
+                }
             }
-
-            // 3. 将相机 Z 轴深度转换为世界空间坐标
-            guard let ray = arView.ray(through: screenPt) else { return nil }
             
+            guard !validDepths.isEmpty else { return nil }
+            let depth = validDepths.min()! // 永远取距离最近的前景(水瓶)
+
+            // 2. 将 Z 轴深度投射回真实世界 3D 坐标
+            guard let ray = arView.ray(through: screenPt) else { return nil }
             let camTransform = frame.camera.transform
-            // ARKit 中相机的 -Z 轴指向前方
             let camForward = normalize(simd_make_float3(-camTransform.columns.2.x,
                                                         -camTransform.columns.2.y,
                                                         -camTransform.columns.2.z))
             
-            // 利用射线与相机前向的夹角余弦，补偿真实射线长度
             let cosTheta = dot(ray.direction, camForward)
             guard cosTheta > 0 else { return nil }
             
@@ -227,35 +227,55 @@ struct ARViewContainer: UIViewRepresentable {
                 self.detecting = false
 
                 DispatchQueue.main.async {
-                    guard let arView = self.arView else { return }
+                    guard let arView = self.arView, let frame = arView.session.currentFrame else { return }
                     self.seq += 1
                     let localSeq = self.seq
 
                     guard let centerNorm else {
-                        let msg: [String: Any] = [
-                            "t": t, "seq": localSeq, "mode": "bottle_miss",
-                            "conf": Float(conf), "cam": ["pos": camPos, "quat": camQuat], "obj": []
-                        ]
-                        DispatchQueue.global(qos: .utility).async { [sender = self.sender] in
-                            sender.send(jsonObject: msg)
-                        }
+                        self.sendMiss(t: t, seq: localSeq, camPos: camPos, camQuat: camQuat, conf: conf)
                         return
                     }
 
+                    // ==========================================
+                    // 🚀 3. 终极坐标系修复：手动进行 ScaleAspectFill 物理裁切计算
+                    // ==========================================
                     let size = arView.bounds.size
-                    let u = centerNorm.x * size.width
-                    let v = (1.0 - centerNorm.y) * size.height
-                    let screenPt = CGPoint(x: u, y: v)
+                    
+                    // 获取相机底层图像的物理宽高比 (注意横竖屏转换)
+                    let imageW = CGFloat(frame.camera.imageResolution.height)
+                    let imageH = CGFloat(frame.camera.imageResolution.width)
+                    let imageRatio = imageW / imageH
+                    let viewRatio = size.width / size.height
+                    
+                    var screenX: CGFloat = 0
+                    var screenY: CGFloat = 0
+                    
+                    // Vision 默认坐标系 y 是向上的，UI 需要倒置
+                    let vx = CGFloat(centerNorm.x)
+                    let vy = CGFloat(1.0 - centerNorm.y)
+                    
+                    if viewRatio < imageRatio {
+                        // 手机竖屏通常是这样：高度填满，宽度两侧被裁掉
+                        screenY = vy * size.height
+                        let displayedWidth = imageRatio * size.height
+                        let offset = (displayedWidth - size.width) / 2.0
+                        screenX = (vx * displayedWidth) - offset
+                    } else {
+                        // 兜底逻辑
+                        screenX = vx * size.width
+                        let displayedHeight = size.width / imageRatio
+                        let offset = (displayedHeight - size.height) / 2.0
+                        screenY = (vy * displayedHeight) - offset
+                    }
+                    
+                    let screenPt = CGPoint(x: screenX, y: screenY)
+                    // ==========================================
 
-                    // ==========================================
-                    // 🚀 3. 优先级策略：LiDAR 真实深度 -> ARKit 估算平面
-                    // ==========================================
                     var bottlePos: [Float]? = nil
                     
                     if let lidarPos = self.getLiDARDepthPoint(arView: arView, screenPt: screenPt) {
                         bottlePos = lidarPos
                     } else {
-                        // 降级使用传统的估算平面 Raycast
                         var results = arView.raycast(from: screenPt, allowing: .existingPlaneInfinite, alignment: .horizontal)
                         if results.isEmpty {
                             results = arView.raycast(from: screenPt, allowing: .estimatedPlane, alignment: .any)
@@ -269,7 +289,7 @@ struct ARViewContainer: UIViewRepresentable {
                     if let finalPos = bottlePos {
                         let msg: [String: Any] = [
                             "t": t, "seq": localSeq, "mode": "bottle_target",
-                            "screen": ["u": Float(u), "v": Float(v)], "conf": Float(conf),
+                            "screen": ["u": Float(screenX), "v": Float(screenY)], "conf": Float(conf),
                             "cam": ["pos": camPos, "quat": camQuat],
                             "obj": [["name": "bottle", "pos": finalPos, "conf": Float(conf)]]
                         ]
@@ -277,18 +297,21 @@ struct ARViewContainer: UIViewRepresentable {
                             sender.send(jsonObject: msg)
                         }
                     } else {
-                        // 都失败时发送位置为 null 的包
-                        let msg: [String: Any] = [
-                            "t": t, "seq": localSeq, "mode": "bottle_target",
-                            "screen": ["u": Float(u), "v": Float(v)], "conf": Float(conf),
-                            "cam": ["pos": camPos, "quat": camQuat],
-                            "obj": [["name": "bottle", "pos": NSNull(), "conf": Float(conf)]]
-                        ]
-                        DispatchQueue.global(qos: .utility).async { [sender = self.sender] in
-                            sender.send(jsonObject: msg)
-                        }
+                        self.sendMiss(t: t, seq: localSeq, camPos: camPos, camQuat: camQuat, conf: conf, screen: screenPt)
                     }
                 }
+            }
+        }
+
+        private func sendMiss(t: TimeInterval, seq: Int, camPos: [Float], camQuat: [Float], conf: Float, screen: CGPoint? = nil) {
+            var msg: [String: Any] = [
+                "t": t, "seq": seq, "mode": screen == nil ? "bottle_miss" : "bottle_target",
+                "conf": conf, "cam": ["pos": camPos, "quat": camQuat],
+                "obj": screen == nil ? [] : [["name": "bottle", "pos": NSNull(), "conf": conf]]
+            ]
+            if let screen { msg["screen"] = ["u": Float(screen.x), "v": Float(screen.y)] }
+            DispatchQueue.global(qos: .utility).async { [sender = self.sender] in
+                sender.send(jsonObject: msg)
             }
         }
 
@@ -338,7 +361,6 @@ struct ARViewContainer: UIViewRepresentable {
             
             var targetPos: [Float]? = nil
             
-            // 同样也为手动点击加入 LiDAR 支持
             if let lidarPos = getLiDARDepthPoint(arView: arView, screenPt: loc) {
                 targetPos = lidarPos
             } else {

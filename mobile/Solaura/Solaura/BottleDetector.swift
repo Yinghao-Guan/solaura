@@ -35,10 +35,15 @@ final class BottleDetector {
                 // 只找 bottle（不要拿 top-1 的任意类别）
                 var bestCenter: CGPoint? = nil
                 var bestConf: Float = 0
+                
+                // 🚀 新增：置信度阈值 (Confidence Threshold)
+                // 推荐设置在 0.25 到 0.5 之间。0.3 是个很好的起点，你可以根据测试体验微调。
+                let minConfidence: Float = 0.3
 
                 for o in obs {
                     for label in o.labels {
-                        if label.identifier == "bottle", label.confidence > bestConf {
+                        // 增加条件：不仅要大于 bestConf，还必须大于我们设定的 minConfidence 底线
+                        if label.identifier == "bottle", label.confidence > bestConf, label.confidence >= minConfidence {
                             bestConf = label.confidence
                             let bb = o.boundingBox
                             bestCenter = CGPoint(x: bb.midX, y: bb.midY)
@@ -48,7 +53,7 @@ final class BottleDetector {
 
                 if self.debugPrints {
                     if let bestCenter { print("bottle conf=\(bestConf) center=\(bestCenter)") }
-                    else { print("bottle not found") }
+                    else { print("bottle not found (or below threshold)") }
                 }
 
                 completion?(bestCenter, bestConf)
