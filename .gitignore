@@ -215,3 +215,4 @@ node_modules/
 
 # ios .env
 Secrets.swift
+mobile/Solaura/Solaura/Secrets.swift
