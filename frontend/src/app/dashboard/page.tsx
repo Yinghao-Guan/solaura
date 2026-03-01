@@ -51,6 +51,20 @@ export default function DashboardPage() {
             (window as any).setSource(1, { intensity: 0.0 });
           }
         }
+
+        // Hand position: show red sphere when visible, hide otherwise
+        if (typeof (window as any).setHand === "function") {
+          if (data.hand_visible && data.hand_cam_offset) {
+            const [, vhy_cam, vhz_cam]: number[] = data.hand_cam_offset;
+            (window as any).setHand({
+              x: vhy_cam * WORLD_TO_CANVAS,
+              z: vhz_cam * WORLD_TO_CANVAS,
+              visible: true,
+            });
+          } else {
+            (window as any).setHand({ visible: false });
+          }
+        }
       } catch {
         // backend not running
       }
@@ -336,6 +350,15 @@ function TerrainCanvas() {
       sources.push({ x: pos.x, z: pos.z, intensity: 0.0, marker });
     });
 
+    // ── Hand marker (red sphere) ───────────────────────────────────────────────
+    const handMarker = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xff2020 })
+    );
+    handMarker.position.set(0, 0.1, 0);
+    handMarker.visible = false;
+    scene.add(handMarker);
+
     // ── Public API ────────────────────────────────────────────────────────────
     (window as any).setSource = (index: number, data: { x?: number; z?: number; intensity?: number }) => {
       if (!sources[index]) return;
@@ -345,6 +368,12 @@ function TerrainCanvas() {
 
     (window as any).setSources = (list: { x?: number; z?: number; intensity?: number }[]) => {
       list.forEach((s, i) => (window as any).setSource(i, s));
+    };
+
+    (window as any).setHand = (data: { x?: number; z?: number; visible?: boolean }) => {
+      if (data.visible !== undefined) handMarker.visible = data.visible;
+      if (data.x !== undefined) handMarker.position.x = data.x;
+      if (data.z !== undefined) handMarker.position.z = data.z;
     };
 
     // ── Source influence ──────────────────────────────────────────────────────
@@ -429,6 +458,9 @@ function TerrainCanvas() {
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+      delete (window as any).setSource;
+      delete (window as any).setSources;
+      delete (window as any).setHand;
     };
   }, []);
 
