@@ -3,9 +3,20 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const BG = "#ffffff";
-const CYAN = "#0891b2";
-const MUTED = "#525252";
+const THEMES = {
+  light: {
+    bg: "#ffffff",
+    accent: "#0891b2",
+    muted: "#525252",
+    label: "var(--text-label)",
+  },
+  dark: {
+    bg: "transparent",
+    accent: "rgba(180, 160, 255, 0.9)",
+    muted: "rgba(255,255,255,0.7)",
+    label: "rgba(180, 160, 255, 0.6)",
+  },
+} as const;
 
 type PageShellProps = {
   pageNum: number;
@@ -13,6 +24,9 @@ type PageShellProps = {
   nextHref: string | null;
   prevHref: string | null;
   nextVisibleDelay?: number;
+  theme?: "light" | "dark";
+  backgroundColor?: string;
+  backgroundImage?: string;
   children: React.ReactNode;
 };
 
@@ -22,11 +36,15 @@ export function PageShell({
   nextHref,
   prevHref,
   nextVisibleDelay = 0,
+  theme = "light",
+  backgroundColor,
+  backgroundImage,
   children,
 }: PageShellProps) {
   const router = useRouter();
   const [leaving, setLeaving] = useState(false);
   const [nextVisible, setNextVisible] = useState(nextVisibleDelay === 0);
+  const colors = THEMES[theme];
 
   useEffect(() => {
     if (nextVisibleDelay <= 0) {
@@ -47,7 +65,11 @@ export function PageShell({
       className="fixed inset-0 overflow-hidden transition-opacity duration-250 ease-in"
       style={{
         opacity: leaving ? 0 : 1,
-        backgroundColor: BG,
+        backgroundColor: backgroundColor ?? colors.bg,
+        backgroundImage: backgroundImage ?? undefined,
+        backgroundRepeat: backgroundImage ? "no-repeat" : undefined,
+        backgroundSize: backgroundImage ? "cover" : undefined,
+        backgroundPosition: backgroundImage ? "center" : undefined,
       }}
     >
       <div
@@ -58,7 +80,7 @@ export function PageShell({
           style={{
             fontFamily: "Geist Mono, monospace",
             fontSize: 11,
-            color: "var(--text-label)",
+            color: colors.label,
             letterSpacing: "0.15em",
           }}
         >
@@ -80,7 +102,7 @@ export function PageShell({
                 style={{
                   fontFamily: "Geist, system-ui, sans-serif",
                   fontSize: 14,
-                  color: MUTED,
+                  color: colors.muted,
                   background: "none",
                   border: "none",
                   cursor: "pointer",
@@ -109,7 +131,7 @@ export function PageShell({
                 style={{
                   fontFamily: "Geist, system-ui, sans-serif",
                   fontSize: 14,
-                  color: CYAN,
+                  color: colors.accent,
                   background: "none",
                   border: "none",
                   cursor: "pointer",

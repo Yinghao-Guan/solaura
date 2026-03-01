@@ -206,7 +206,7 @@ export default function Page3WhatWeBuilt() {
           </div>
 
           <div className="flex justify-center">
-            <svg width={300} height={190} viewBox="0 0 300 190" style={{ overflow: "visible" }}>
+            <svg width={380} height={240} viewBox="0 0 300 190" style={{ overflow: "visible" }}>
               <text
                 x={150}
                 y={18}

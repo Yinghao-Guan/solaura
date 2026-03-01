@@ -20,30 +20,48 @@ const WITH_SOLAURA = [
 
 export default function Page4TheProof() {
   return (
-    <PageShell pageNum={5} totalPages={7} nextHref="/demo" prevHref="/dashboard">
-      <div
-        className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-4 md:px-12"
-        style={{ maxWidth: 860 }}
+    <PageShell
+      pageNum={5}
+      totalPages={7}
+      nextHref="/demo"
+      prevHref="/dashboard"
+      theme="dark"
+      backgroundColor="#090620ff"
+      backgroundImage={`radial-gradient(
+        ellipse 70% 70% at 100% 0%,
+        rgba(120, 90, 220, 0.22) 0%,
+        rgba(37, 20, 105, 0.1) 40%,
+        transparent 80%
+      )`}
+    >
+      <main
+        className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-6 md:px-12"
+        style={{
+          maxWidth: 980,
+          color: "#e8e4f0",
+          fontFamily: "system-ui, sans-serif",
+          minHeight: "100%",
+        }}
       >
-        <div className="mx-auto w-full max-w-[780px]">
+        <div className="mx-auto w-full max-w-[820px]">
           <p
             style={{
-              fontFamily: "Geist Mono, monospace",
-              fontSize: 11,
-              color: "var(--text-muted)",
-              marginBottom: 24,
+              fontSize: 10,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(180, 160, 255, 0.6)",
+              marginBottom: 20,
             }}
           >
-            Solaura  /  Why It Works
+            Solaura / Why It Works
           </p>
 
           <h2
             style={{
-              fontFamily: "Geist, system-ui, sans-serif",
               fontWeight: 600,
-              fontSize: 32,
-              lineHeight: 1.3,
-              color: "var(--text)",
+              fontSize: 38,
+              lineHeight: 1.2,
+              color: "#fff",
               margin: 0,
             }}
           >
@@ -54,12 +72,11 @@ export default function Page4TheProof() {
 
           <p
             style={{
-              fontFamily: "Geist, system-ui, sans-serif",
               fontSize: 16,
               lineHeight: 1.75,
-              color: "var(--text-muted)",
-              marginTop: 24,
-              maxWidth: 480,
+              color: "rgba(255,255,255,0.62)",
+              marginTop: 22,
+              maxWidth: 520,
             }}
           >
             iPhone Pro has included LiDAR since 2020.
@@ -69,23 +86,23 @@ export default function Page4TheProof() {
             people already own.
           </p>
 
-          <div className="mt-8 flex flex-col gap-px sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <div
               style={{
                 flex: 1,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(180,160,255,0.12)",
                 borderRadius: 6,
-                padding: 24,
+                padding: 20,
               }}
             >
               <p
                 style={{
-                  fontFamily: "Geist Mono, monospace",
-                  fontSize: 11,
-                  color: "var(--text-label)",
+                  fontSize: 10,
+                  letterSpacing: "0.2em",
+                  color: "rgba(180, 160, 255, 0.6)",
                   margin: 0,
-                  marginBottom: 16,
+                  marginBottom: 14,
                 }}
               >
                 WITHOUT SOLAURA
@@ -95,13 +112,12 @@ export default function Page4TheProof() {
                   <li
                     key={item}
                     style={{
-                      fontFamily: "Geist, system-ui, sans-serif",
                       fontSize: 14,
                       lineHeight: 2,
-                      color: "var(--text-muted)",
+                      color: "rgba(255,255,255,0.65)",
                     }}
                   >
-                    <span style={{ color: "var(--danger)" }}>●</span> {item}
+                    <span style={{ color: "#ff7a7a" }}>●</span> {item}
                   </li>
                 ))}
               </ul>
@@ -109,19 +125,19 @@ export default function Page4TheProof() {
             <div
               style={{
                 flex: 1,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(180,160,255,0.12)",
                 borderRadius: 6,
-                padding: 24,
+                padding: 20,
               }}
             >
               <p
                 style={{
-                  fontFamily: "Geist Mono, monospace",
-                  fontSize: 11,
-                  color: "var(--cyan)",
+                  fontSize: 10,
+                  letterSpacing: "0.2em",
+                  color: "rgba(180, 160, 255, 0.85)",
                   margin: 0,
-                  marginBottom: 16,
+                  marginBottom: 14,
                 }}
               >
                 WITH SOLAURA
@@ -131,13 +147,12 @@ export default function Page4TheProof() {
                   <li
                     key={item}
                     style={{
-                      fontFamily: "Geist, system-ui, sans-serif",
                       fontSize: 14,
                       lineHeight: 2,
-                      color: "var(--text)",
+                      color: "rgba(255,255,255,0.9)",
                     }}
                   >
-                    <span style={{ color: "var(--success)" }}>●</span> {item}
+                    <span style={{ color: "#7bf5a0" }}>●</span> {item}
                   </li>
                 ))}
               </ul>
@@ -146,19 +161,18 @@ export default function Page4TheProof() {
 
           <div
             style={{
-              marginTop: 32,
-              background: "var(--surface)",
-              borderLeft: "3px solid var(--cyan)",
+              marginTop: 28,
+              background: "rgba(120, 90, 220, 0.12)",
+              borderLeft: "3px solid rgba(180, 160, 255, 0.8)",
               borderRadius: 6,
               padding: "14px 18px",
             }}
           >
             <p
               style={{
-                fontFamily: "Geist, system-ui, sans-serif",
                 fontWeight: 500,
                 fontSize: 15,
-                color: "var(--text)",
+                color: "rgba(255,255,255,0.85)",
                 margin: 0,
                 lineHeight: 1.6,
               }}
@@ -169,7 +183,7 @@ export default function Page4TheProof() {
             </p>
           </div>
         </div>
-      </div>
+      </main>
     </PageShell>
   );
 }
