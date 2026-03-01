@@ -1,4 +1,5 @@
 import math, time, json, socket, threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import numpy as np
 import sounddevice as sd
 
@@ -107,6 +108,32 @@ def extract_target(msg):
             np.array(cam_quat, np.float32))
 
 
+# ================= HTTP State Server =================
+class _StateHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        with state_lock:
+            cp = latest_state["cam_pos"]
+            tp = latest_state["target_pos"]
+            active = latest_state["is_active"]
+        body = json.dumps({
+            "cam_pos":    cp.tolist() if cp is not None else None,
+            "target_pos": tp.tolist() if tp is not None else None,
+            "is_active":  bool(active),
+        }).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass  # suppress access logs
+
+
+def http_server_thread():
+    HTTPServer(("0.0.0.0", 8765), _StateHandler).serve_forever()
+
+
 # ================= 🚀 核心修改：多线程与全局共享状态 =================
 state_lock = threading.Lock()
 latest_state = {
@@ -168,6 +195,11 @@ def main(mode="live", replay_path=None, replay_speed=1.0):
     # 启动后台收包线程
     t = threading.Thread(target=udp_listener_thread, daemon=True)
     t.start()
+
+    # 启动 HTTP 状态服务器线程
+    ht = threading.Thread(target=http_server_thread, daemon=True)
+    ht.start()
+    print("[OK] HTTP state server on http://0.0.0.0:8765/state")
 
     ema_vw = EMA3(alpha=0.25)
     st = TargetState(timeout_s=2.0)

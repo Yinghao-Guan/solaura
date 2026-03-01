@@ -1,9 +1,58 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
+// World-space range shown in canvas: ±WORLD_RANGE metres
+const WORLD_RANGE = 3.0;
+// Must match HALF in TerrainCanvas (= (GRID-1)*SPACING*0.5 = 79*0.18*0.5)
+const CANVAS_HALF = 7.11;
+const WORLD_TO_CANVAS = CANVAS_HALF / WORLD_RANGE;
+
 export default function DashboardPage() {
+  const [coords, setCoords] = useState<[number, number, number] | null>(null);
+  const [isActive, setIsActive] = useState(false);
+  const [distance, setDistance] = useState<number | null>(null);
+
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:8765/state");
+        const data = await res.json();
+
+        if (data.cam_pos && data.target_pos) {
+          const [cx, cy, cz]: number[] = data.cam_pos;
+          const [tx, ty, tz]: number[] = data.target_pos;
+          const dx = tx - cx, dy = ty - cy, dz = tz - cz;
+          const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          setCoords([dx, dy, dz]);
+          setIsActive(data.is_active);
+          setDistance(d);
+
+          if (typeof (window as any).setSource === "function") {
+            (window as any).setSource(0, {
+              x: dx * WORLD_TO_CANVAS,
+              z: dz * WORLD_TO_CANVAS,
+              intensity: data.is_active ? 0.9 : 0.0,
+            });
+            // Hide second fixed source
+            (window as any).setSource(1, { intensity: 0.0 });
+          }
+        } else {
+          setIsActive(false);
+          if (typeof (window as any).setSource === "function") {
+            (window as any).setSource(0, { intensity: 0.0 });
+            (window as any).setSource(1, { intensity: 0.0 });
+          }
+        }
+      } catch {
+        // backend not running
+      }
+    }, 100);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <main
       style={{
@@ -31,7 +80,7 @@ export default function DashboardPage() {
           borderRight: "1px solid rgba(180, 160, 255, 0.12)",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 66 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
           <div>
             <div style={{ fontSize: 40, fontWeight: 600, color: "#fff" }}>?</div>
@@ -39,16 +88,24 @@ export default function DashboardPage() {
 
           <Divider />
 
-          <Metric label="Latency" value="—" unit="ms" />
-          <Metric label="State"   value="—" />
+          <Metric label="Distance" value={distance !== null ? distance.toFixed(2) : "—"} unit="m" />
+          <Metric
+            label="State"
+            value={isActive ? "LOCKED" : "IDLE"}
+            highlight={isActive}
+          />
 
           <Divider />
 
           <div>
-            <Label>Coordinates</Label>
+            <Label>Object Offset (m)</Label>
             <div style={{ display: "flex", gap: 8 }}>
-              {["X", "Y", "Z"].map((axis) => (
-                <CoordBox key={axis} axis={axis} />
+              {(["X", "Y", "Z"] as const).map((axis, i) => (
+                <CoordBox
+                  key={axis}
+                  axis={axis}
+                  value={coords ? coords[i].toFixed(2) : undefined}
+                />
               ))}
             </div>
           </div>
@@ -105,11 +162,11 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Metric({ label, value, unit }: { label: string; value: string; unit?: string }) {
+function Metric({ label, value, unit, highlight }: { label: string; value: string; unit?: string; highlight?: boolean }) {
   return (
     <div>
       <Label>{label}</Label>
-      <div style={{ fontSize: 16, color: "rgba(255,255,255,0.88)" }}>
+      <div style={{ fontSize: 16, color: highlight ? "#7bf5a0" : "rgba(255,255,255,0.88)" }}>
         {value}
         {unit && (
           <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginLeft: 3 }}>
@@ -121,7 +178,7 @@ function Metric({ label, value, unit }: { label: string; value: string; unit?: s
   );
 }
 
-function CoordBox({ axis }: { axis: string }) {
+function CoordBox({ axis, value }: { axis: string; value?: string }) {
   return (
     <div
       style={{
@@ -135,7 +192,7 @@ function CoordBox({ axis }: { axis: string }) {
       <div style={{ fontSize: 8, letterSpacing: "0.14em", color: "rgba(180,160,255,0.4)", marginBottom: 2 }}>
         {axis}
       </div>
-      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)" }}>—</div>
+      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)" }}>{value ?? "—"}</div>
     </div>
   );
 }
