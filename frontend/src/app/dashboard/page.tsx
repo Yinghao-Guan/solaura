@@ -5,8 +5,8 @@ import * as THREE from "three";
 
 // Must match HALF in TerrainCanvas (= (GRID-1)*SPACING*0.5 = 79*0.18*0.5)
 const CANVAS_HALF = 7.11;
-// Azimuth ±60° fills the full canvas width (amplifies far objects naturally)
-const AZ_SCALE    = CANVAS_HALF / (Math.PI / 3);
+// Azimuth ±25° fills the full canvas width (amplifies far objects naturally)
+const AZ_SCALE    = CANVAS_HALF / (Math.PI / 7.2);
 // Camera sphere sits at canvas z=5; 3 m forward reaches the top (-CANVAS_HALF)
 const CAM_SPHERE_Z = 5;
 const DEPTH_SCALE  = (CAM_SPHERE_Z + CANVAS_HALF) / 3.0;  // ~4.0
