@@ -70,7 +70,8 @@ struct ContentView: View {
             appState.isRadarActive = false
             
             // 2. 瞬间打断 Gemini 正在逼逼叨的语音
-            voice.stopSpeaking()
+            // voice.stopSpeaking()
+            ElevenLabsService.shared.stopSpeaking()
             
             // 3. 瞬间静音！向 Python 发送强制丢失信号，打破它的 2 秒记忆续命。
             // 这样你电脑/音响里的滴滴声也会立刻停止，绝不会录进手机麦克风！
@@ -103,13 +104,13 @@ struct ContentView: View {
             case .chat(let reply):
                 // Gemini 决定只聊天
                 appState.uiStatus = reply
-                voice.speak(reply)
+                ElevenLabsService.shared.speak(reply)
                 appState.isRadarActive = false
                 
             case .activateRadar(let target, let reply):
                 // Gemini 决定开启雷达寻找物体！
                 appState.uiStatus = "Radar Targeting: \(target)"
-                voice.speak(reply)
+                ElevenLabsService.shared.speak(reply)
                 
                 // 🚀 瞬间激活 15Hz 的空间追踪与 UDP 发送引擎！
                 appState.isRadarActive = true
