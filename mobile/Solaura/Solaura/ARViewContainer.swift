@@ -16,6 +16,7 @@ struct ARViewContainer: UIViewRepresentable {
         let config = ARWorldTrackingConfiguration()
         config.planeDetection = [.horizontal]
         
+        // 开启原生的 SceneDepth 和网格重建
         if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
             config.frameSemantics.insert(.sceneDepth)
             print("✅ LiDAR Scene Depth Enabled (Raw mode)")
@@ -48,6 +49,7 @@ struct ARViewContainer: UIViewRepresentable {
         private var seq: Int = 0
         private var lastSentTs: TimeInterval = 0
         
+        // 独立双轨频率
         private let bottleHz: Double = 2.5
         private let handHz: Double = 15.0
         private var lastBottleTs: TimeInterval = 0
@@ -68,6 +70,7 @@ struct ARViewContainer: UIViewRepresentable {
         private var coaching: ARCoachingOverlayView?
         private var statusLabel: UILabel?
 
+        // 拦截 NaN 数据
         private func isSafe(_ array: [Float]) -> Bool {
             return !array.contains { $0.isNaN || $0.isInfinite }
         }
@@ -242,6 +245,7 @@ struct ARViewContainer: UIViewRepresentable {
             let baseAddress = CVPixelBufferGetBaseAddress(depthMap)
             let bytesPerRow = CVPixelBufferGetBytesPerRow(depthMap)
             
+            // 巨型防穿透探测网：手部 11x11，水瓶 5x5
             let windowSize = isHand ? 5 : 2
             var validDepths: [Float32] = []
             
@@ -311,6 +315,7 @@ struct ARViewContainer: UIViewRepresentable {
 
         private func runHandDetection(pixelBuffer: CVPixelBuffer, camPos: [Float], camQuat: [Float], t: TimeInterval) {
             var handCenterNorm: CGPoint? = nil
+            // 修复：使用 .right 匹配竖屏物理坐标系
             let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
             do {
                 try handler.perform([handReq])
