@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 // World-space range shown in canvas: ±WORLD_RANGE metres
-const WORLD_RANGE = 1.5;
+const WORLD_RANGE = 1.0;
 // Must match HALF in TerrainCanvas (= (GRID-1)*SPACING*0.5 = 79*0.18*0.5)
 const CANVAS_HALF = 7.11;
 const WORLD_TO_CANVAS = CANVAS_HALF / WORLD_RANGE;
@@ -261,7 +261,7 @@ function TerrainCanvas() {
 
     // ── Scene / Camera ────────────────────────────────────────────────────────
     const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(72, 1, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(20, 1, 0.1, 100);
     camera.position.set(0, 3, 13);
     camera.lookAt(0, 0, 0);
 
