@@ -3,9 +3,9 @@
 import { PageShell } from "../components/PageShell";
 
 const ROWS = [
-  { step: "01", name: "SENSING", value: "iPhone LiDAR maps objects up to 5m ahead" },
-  { step: "02", name: "PROXIMITY", value: "Beep interval shortens as distance closes" },
-  { step: "03", name: "DIRECTION", value: "Stereo panning: left is left, right is right" },
+  { step: "01", name: "SENSING", value: "iPhone Pro LiDAR maps 3D space in real time — peer-reviewed accuracy confirmed at indoor ranges" },
+  { step: "02", name: "PROXIMITY", value: "Beep interval shortens as distance closes — LASS system (IEEE 2018) proved stereo pitch conveys distance effectively" },
+  { step: "03", name: "DIRECTION", value: "Stereo panning maps object azimuth — visual cortex activates for spatial sound in blind individuals (Cerebral Cortex, 2024)" },
 ];
 
 export default function Page3WhatWeBuilt() {
@@ -155,38 +155,118 @@ export default function Page3WhatWeBuilt() {
                 <span style={{ color: "var(--success)" }}>✓</span> Offline / on-device — confirmed
                 <br />
                 <span style={{ color: "var(--success)" }}>✓</span> Existing iPhone hardware — no new device needed
+                <br />
+                <span style={{ color: "var(--success)" }}>✓</span> LiDAR spatial sensing — peer-reviewed across 6 published systems (IEEE / PMC 2018–2026)
               </p>
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <svg width={280} height={180} viewBox="0 0 280 180" style={{ overflow: "visible" }}>
-              <text
-                x={140}
-                y={18}
-                textAnchor="middle"
+          <div
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+              padding: 24,
+              width: "100%",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "Geist Mono, monospace",
+                fontSize: 10,
+                color: "var(--text-label)",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                margin: 0,
+              }}
+            >
+              PEER-REVIEWED EVIDENCE
+            </p>
+            <div style={{ height: 1, background: "var(--border)", margin: "12px 0" }} />
+            {[
+              { number: "2.2B", label: "people affected by vision impairment globally", source: "WHO\n2024" },
+              { number: "$411B", label: "annual productivity loss from vision impairment", source: "WHO\nGlobal\nReport" },
+              { number: "$10.5B", label: "assistive tech market by 2028 — growing at 7.9% annually", source: "Markets\nand\nMarkets\n2023" },
+              { number: "6", label: "peer-reviewed LiDAR assistive systems confirm offline real-time spatial audio is achievable", source: "IEEE /\nPMC\n2018–2026" },
+            ].map((stat) => (
+              <div
+                key={stat.number}
                 style={{
-                  fontFamily: "Geist Mono, monospace",
-                  fontSize: 9,
-                  fill: "var(--text-muted)",
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  marginBottom: 20,
                 }}
               >
-                FORWARD SENSING ZONE
-              </text>
-              <line x1={80} y1={120} x2={200} y2={120} stroke="var(--border)" strokeWidth={1} strokeDasharray="4 2" />
-              <text x={205} y={124} style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, fill: "var(--text-muted)" }}>5m</text>
-              <line x1={80} y1={80} x2={200} y2={80} stroke="var(--border)" strokeWidth={1} strokeDasharray="4 2" />
-              <text x={205} y={84} style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, fill: "var(--text-muted)" }}>3m</text>
-              <line x1={80} y1={40} x2={200} y2={40} stroke="var(--border)" strokeWidth={1} strokeDasharray="4 2" />
-              <text x={205} y={44} style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, fill: "var(--text-muted)" }}>1m</text>
-              <line x1={140} y1={155} x2={60} y2={30} stroke="var(--cyan)" strokeWidth={1} opacity={0.5} />
-              <line x1={140} y1={155} x2={140} y2={20} stroke="var(--cyan)" strokeWidth={1.5} opacity={0.8} />
-              <line x1={140} y1={155} x2={220} y2={30} stroke="var(--cyan)" strokeWidth={1} opacity={0.5} />
-              <circle cx={140} cy={155} r={5} fill="var(--cyan)" />
-              <text x={140} y={178} textAnchor="middle" style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, fill: "var(--text-muted)" }}>YOU</text>
-              <circle cx={140} cy={20} r={5} fill="var(--cyan)" />
-              <text x={140} y={12} textAnchor="middle" style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, fill: "var(--text-muted)" }}>OBJECT</text>
-            </svg>
+                <div>
+                  <div style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 700, fontSize: 28, color: "var(--cyan)" }}>
+                    {stat.number}
+                  </div>
+                  <p style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 400, fontSize: 12, color: "var(--text-muted)", margin: "4px 0 0" }}>
+                    {stat.label}
+                  </p>
+                </div>
+                <p
+                  style={{
+                    fontFamily: "Geist Mono, monospace",
+                    fontSize: 9,
+                    color: "var(--text-label)",
+                    textAlign: "right",
+                    margin: 0,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {stat.source}
+                </p>
+              </div>
+            ))}
+            <div style={{ height: 1, background: "var(--border)", margin: "4px 0 12px" }} />
+            <div style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
+              <span style={{ color: "#4cc38a", fontSize: 10 }}>●</span>
+              <div>
+                <p style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 400, fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
+                  Visual cortex recruited for spatial sound in blind individuals
+                </p>
+                <p style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, color: "var(--text-label)", margin: "2px 0 0" }}>
+                  Cerebral Cortex · 2024
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
+              <span style={{ color: "#4cc38a", fontSize: 10 }}>●</span>
+              <div>
+                <p style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 400, fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
+                  Brain builds spatial maps independent of vision via place and grid cells
+                </p>
+                <p style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, color: "var(--text-label)", margin: "2px 0 0" }}>
+                  Nature Comms · 2024
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start", marginBottom: 0 }}>
+              <span style={{ color: "#4cc38a", fontSize: 10 }}>●</span>
+              <div>
+                <p style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 400, fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
+                  Sensory substitution: brain learns to interpret directional sound as space within 30 minutes
+                </p>
+                <p style={{ fontFamily: "Geist Mono, monospace", fontSize: 9, color: "var(--text-label)", margin: "2px 0 0" }}>
+                  npj Science of Learning · 2025
+                </p>
+              </div>
+            </div>
+            <p
+              style={{
+                fontFamily: "Geist Mono, monospace",
+                fontSize: 9,
+                color: "var(--text-label)",
+                marginTop: 16,
+                marginBottom: 0,
+              }}
+            >
+              Sources: WHO · IAPB · IEEE Xplore · PubMed · Nature · Cerebral Cortex · Frontiers Neurosci.
+            </p>
           </div>
         </div>
       </div>

@@ -3,19 +3,21 @@
 import { PageShell } from "../components/PageShell";
 
 const WITHOUT = [
-  "Dedicated hardware required",
-  "Requires internet connection",
-  "Verbal narration — slow feedback",
+  "Dedicated hardware: $360–$5,000+",
+  "Requires internet (Seeing AI, Lookout)",
+  "Verbal narration — average 2–4s delay",
   "Fails indoors and in darkness",
-  "Needs a human assistant",
+  "Requires extra device or attachment",
+  "Ultrasonic canes: detect ahead only, no spatial audio",
 ];
 
 const WITH_SOLAURA = [
-  "Runs on existing iPhone",
-  "Fully offline, on-device",
-  "Instant directional audio <50ms",
-  "Works in total darkness",
-  "Zero setup — point and sense",
+  "Runs on existing iPhone Pro",
+  "Fully offline — on-device LiDAR",
+  "Directional audio feedback <50ms",
+  "Works in complete darkness",
+  "Zero hardware cost beyond iPhone",
+  "Stereo panning proven to convey object direction (IEEE 2018–2026)",
 ];
 
 export default function Page4TheProof() {
@@ -163,9 +165,70 @@ export default function Page4TheProof() {
                 lineHeight: 1.6,
               }}
             >
-              This isn&apos;t a concept. The core is confirmed working.
+              6 peer-reviewed systems confirm LiDAR +
               <br />
-              Built in [X] hours. Demo is live.
+              directional audio works offline.
+              <br />
+              The brain is already wired to process it.
+              <br />
+              The sensor is already in the phone.
+              <br />
+              Solaura connects them.
+            </p>
+          </div>
+
+          <div
+            style={{
+              marginTop: 16,
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+              padding: 16,
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "Geist Mono, monospace",
+                fontSize: 10,
+                color: "var(--text-label)",
+                margin: 0,
+                marginBottom: 12,
+              }}
+            >
+              COMPETITOR PRICING REFERENCE
+            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border)", padding: "10px 0" }}>
+              <span style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 500, fontSize: 14 }}>OrCam MyEye 2</span>
+              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 13, color: "var(--danger)" }}>~$4,000–$5,000</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border)", padding: "10px 0" }}>
+              <span style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 500, fontSize: 14 }}>WeWALK / BuzzClip (ultrasonic)</span>
+              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 13, color: "var(--danger)" }}>~$500–$800</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
+              <span style={{ fontFamily: "Geist, system-ui, sans-serif", fontWeight: 500, fontSize: 14 }}>Smart Vision Glasses (LiDAR)</span>
+              <span style={{ fontFamily: "Geist Mono, monospace", fontSize: 13, color: "var(--danger)" }}>~$360</span>
+            </div>
+            <p
+              style={{
+                fontFamily: "Geist Mono, monospace",
+                fontSize: 10,
+                color: "#4cc38a",
+                margin: "12px 0 0",
+              }}
+            >
+              Solaura: $0 additional hardware required.
+            </p>
+            <p
+              style={{
+                fontFamily: "Geist Mono, monospace",
+                fontSize: 9,
+                color: "var(--text-label)",
+                marginTop: 8,
+                marginBottom: 0,
+              }}
+            >
+              Sources: OrCam.com · PMC 12178407 · BuzzClip.com · IEEE Xplore
             </p>
           </div>
         </div>

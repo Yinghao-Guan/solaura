@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { PageShell } from "./components/PageShell";
 
 const STATS = [
-  { number: "43M", label: "People blind worldwide", color: "var(--cyan)" },
-  { number: "295M", label: "Severe vision loss", color: "var(--cyan)" },
-  { number: "+55%", label: "Projected rise by 2050", color: "var(--amber)" },
+  { number: "43M", label: "people living with blindness globally", source: "WHO · 2024", color: "var(--cyan)" },
+  { number: "295M", label: "severe vision loss — rising to 474M by 2050", source: "IAPB Vision Atlas · 2021", color: "var(--cyan)" },
+  { number: "$411B", label: "lost in global productivity every year", source: "WHO Global Report", color: "var(--cyan)" },
 ];
 
 export default function Page1HumanCost() {
@@ -61,11 +61,11 @@ export default function Page1HumanCost() {
                 margin: 0,
               }}
             >
-              1.1 billion people
+              2.2 billion people
               <br />
-              can&apos;t see the space
+              live with vision
               <br />
-              they&apos;re standing in.
+              impairment.
             </h1>
           </div>
 
@@ -88,13 +88,15 @@ export default function Page1HumanCost() {
                 margin: 0,
               }}
             >
-              Not the street. Not the phone. The room.
+              43 million are completely blind.
               <br />
-              The hallway. The object two steps ahead.
+              295 million more live with severe vision loss.
               <br />
-              For hundreds of millions, that space is
+              By 2050 those numbers rise to 61 million
               <br />
-              completely invisible.
+              and 474 million.
+              <br />
+              The space in front of them is invisible.
             </p>
           </div>
 
@@ -142,6 +144,16 @@ export default function Page1HumanCost() {
                 >
                   {stat.label}
                 </p>
+                <p
+                  style={{
+                    fontFamily: "Geist Mono, monospace",
+                    fontSize: 10,
+                    color: "var(--text-muted)",
+                    margin: "4px 0 0",
+                  }}
+                >
+                  {stat.source}
+                </p>
               </div>
             ))}
           </div>
@@ -154,7 +166,7 @@ export default function Page1HumanCost() {
               marginTop: 24,
             }}
           >
-            Source: WHO Global Vision Report · IAPB Vision Atlas 2021
+            Source: WHO Blindness & Vision Impairment Fact Sheet 2024 · IAPB Vision Atlas 2021
           </p>
         </div>
       </div>

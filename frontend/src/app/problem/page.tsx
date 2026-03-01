@@ -1,22 +1,26 @@
 "use client";
 
+import { Fragment } from "react";
 import { PageShell } from "../components/PageShell";
 
 const TABLE_ROWS = [
   {
     tool: "White Cane",
-    does: "Detects ground-level obstacles",
-    misses: "Real-time spatial awareness",
+    does: "Detects ground-level obstacles only",
+    misses: "Cannot detect head-level objects, approaching obstacles, or 3D spatial context",
+    source: "Documented limitation — WHO assistive tech review",
   },
   {
     tool: "Screen Reader",
     does: "Reads on-screen digital content",
-    misses: "Awareness of physical space",
+    misses: "Zero awareness of physical space around the user",
+    source: "AT2030 Program — mobile assistive tech gaps",
   },
   {
     tool: "GPS / Maps",
     does: "Outdoor routing and directions",
-    misses: "Indoor, real-time, 3D sensing",
+    misses: "No indoor sensing, no real-time obstacle detection, fails without signal",
+    source: "PathFinder study — arXiv 2025",
   },
 ];
 
@@ -125,46 +129,61 @@ export default function Page2TheGap() {
               </thead>
               <tbody>
                 {TABLE_ROWS.map((row, i) => (
-                  <tr
-                    key={row.tool}
-                    style={{
-                      borderBottom: i < TABLE_ROWS.length - 1 ? "1px solid var(--border)" : "none",
-                      transition: "background 150ms",
-                    }}
-                    className="table-row-hover"
-                  >
-                    <td
+                  <Fragment key={row.tool}>
+                    <tr
                       style={{
-                        fontFamily: "Geist, system-ui, sans-serif",
-                        fontWeight: 500,
-                        fontSize: 15,
-                        color: "var(--text)",
-                        padding: "14px 16px",
+                        borderBottom: "none",
+                        transition: "background 150ms",
                       }}
+                      className="table-row-hover"
                     >
-                      {row.tool}
-                    </td>
-                    <td
-                      style={{
-                        fontFamily: "Geist, system-ui, sans-serif",
-                        fontSize: 15,
-                        color: "var(--text-muted)",
-                        padding: "14px 16px",
-                      }}
-                    >
-                      {row.does}
-                    </td>
-                    <td
-                      style={{
-                        fontFamily: "Geist, system-ui, sans-serif",
-                        fontSize: 15,
-                        color: "var(--danger)",
-                        padding: "14px 16px",
-                      }}
-                    >
-                      <span style={{ color: "var(--danger)" }}>●</span> {row.misses}
-                    </td>
-                  </tr>
+                      <td
+                        style={{
+                          fontFamily: "Geist, system-ui, sans-serif",
+                          fontWeight: 500,
+                          fontSize: 15,
+                          color: "var(--text)",
+                          padding: "14px 16px",
+                        }}
+                      >
+                        {row.tool}
+                      </td>
+                      <td
+                        style={{
+                          fontFamily: "Geist, system-ui, sans-serif",
+                          fontSize: 15,
+                          color: "var(--text-muted)",
+                          padding: "14px 16px",
+                        }}
+                      >
+                        {row.does}
+                      </td>
+                      <td
+                        style={{
+                          fontFamily: "Geist, system-ui, sans-serif",
+                          fontSize: 15,
+                          color: "var(--danger)",
+                          padding: "14px 16px",
+                        }}
+                      >
+                        <span style={{ color: "var(--danger)" }}>●</span> {row.misses}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        colSpan={3}
+                        style={{
+                          fontFamily: "Geist Mono, monospace",
+                          fontSize: 9,
+                          color: "var(--text-muted)",
+                          padding: "4px 16px 12px",
+                          borderBottom: i < TABLE_ROWS.length - 1 ? "1px solid var(--border)" : "none",
+                        }}
+                      >
+                        {row.source}
+                      </td>
+                    </tr>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -192,6 +211,44 @@ export default function Page2TheGap() {
               The space directly in front of them
               <br />
               is invisible. We made it audible.
+            </p>
+          </div>
+
+          <div
+            style={{
+              marginTop: 20,
+              background: "var(--surface)",
+              borderLeft: "3px solid var(--amber)",
+              borderRadius: 6,
+              padding: "14px 18px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "Geist, system-ui, sans-serif",
+                fontWeight: 500,
+                fontSize: 15,
+                color: "var(--text)",
+                margin: 0,
+                lineHeight: 1.6,
+              }}
+            >
+              $411 billion lost in global productivity
+              <br />
+              annually due to vision impairment.
+              <br />
+              The cost of doing nothing is not zero.
+            </p>
+            <p
+              style={{
+                fontFamily: "Geist Mono, monospace",
+                fontSize: 9,
+                color: "var(--text-muted)",
+                margin: "8px 0 0",
+                textAlign: "right",
+              }}
+            >
+              WHO Global Report
             </p>
           </div>
         </div>

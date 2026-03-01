@@ -256,6 +256,18 @@ function Scene3D() {
     sphereMesh.position.copy(spherePos);
     scene.add(sphereMesh);
 
+    const indicatorGeo = new THREE.CircleGeometry(0.25, 32);
+    const indicatorMat = new THREE.MeshBasicMaterial({
+      color: 0x00e5ff,
+      transparent: true,
+      opacity: 0.25,
+      depthWrite: false,
+    });
+    const indicator = new THREE.Mesh(indicatorGeo, indicatorMat);
+    indicator.rotation.x = -Math.PI / 2;
+    indicator.position.set(spherePos.x, 0.01, spherePos.z);
+    scene.add(indicator);
+
     const pointLight = new THREE.PointLight(0x00e5ff, 1, 3);
     pointLight.position.copy(spherePos);
     scene.add(pointLight);
@@ -368,6 +380,12 @@ function Scene3D() {
       animationId = requestAnimationFrame(animate);
 
       sphereMesh.scale.setScalar(1 + Math.sin(Date.now() * 0.003) * 0.08);
+
+      indicator.position.x = sphereMesh.position.x;
+      indicator.position.z = sphereMesh.position.z;
+      indicator.position.y = 0.01;
+      const pulse = 0.15 + Math.sin(Date.now() * 0.003) * 0.1;
+      indicatorMat.opacity = pulse;
 
       if (sphereFlashStart !== null) {
         const elapsed = Date.now() - sphereFlashStart;
