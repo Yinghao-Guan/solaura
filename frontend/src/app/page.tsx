@@ -1,164 +1,163 @@
-export default function SolauraDashboard() {
+"use client";
+
+import { useEffect, useState } from "react";
+import { PageShell } from "./components/PageShell";
+
+const STATS = [
+  { number: "43M", label: "People blind worldwide", color: "var(--cyan)" },
+  { number: "295M", label: "Severe vision loss", color: "var(--cyan)" },
+  { number: "+55%", label: "Projected rise by 2050", color: "var(--amber)" },
+];
+
+export default function Page1HumanCost() {
+  const [headline, setHeadline] = useState(false);
+  const [subtext, setSubtext] = useState(false);
+  const [stats, setStats] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setHeadline(true), 0);
+    const t2 = setTimeout(() => setSubtext(true), 300);
+    const t3 = setTimeout(() => setStats(true), 600);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#050508] bg-grid-pattern text-zinc-100">
-      {/* Header */}
-      <header className="border-b border-zinc-800/80 bg-[#050508]/90 backdrop-blur-sm">
-        <div className="flex h-16 items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl text-cyan-400">☀</span>
-            <h1 className="font-semibold tracking-tight text-zinc-100">
-              Solaura
+    <PageShell pageNum={1} totalPages={5} nextHref="/problem" prevHref={null} nextVisibleDelay={900}>
+      <div
+        className="mx-auto flex min-h-0 flex-1 flex-col justify-center px-6 py-4 md:px-12"
+        style={{ maxWidth: 860 }}
+      >
+        <div className="mx-auto w-full max-w-[720px]">
+          <p
+            style={{
+              fontFamily: "Geist Mono, monospace",
+              fontSize: 11,
+              color: "var(--text-muted)",
+              marginBottom: 24,
+            }}
+          >
+            Solaura  /  The Problem
+          </p>
+
+          <div
+            style={{
+              opacity: headline ? 1 : 0,
+              transform: headline ? "translateY(0)" : "translateY(12px)",
+              transition: "opacity 500ms ease-out, transform 500ms ease-out",
+            }}
+          >
+            <h1
+              style={{
+                fontFamily: "Geist, system-ui, sans-serif",
+                fontWeight: 700,
+                fontSize: 56,
+                lineHeight: 1.15,
+                letterSpacing: "-0.02em",
+                color: "var(--text)",
+                margin: 0,
+              }}
+            >
+              1.1 billion people
+              <br />
+              can&apos;t see the space
+              <br />
+              they&apos;re standing in.
             </h1>
-            <span className="rounded-full bg-cyan-500/20 px-2.5 py-0.5 text-xs font-medium text-cyan-400">
-              Perceive Beyond Sight
-            </span>
           </div>
-          <div className="flex items-center gap-4">
-            <StatusPill status="live" label="Processing" />
-            <StatusPill status="connected" label="Device Connected" />
-          </div>
-        </div>
-      </header>
 
-      <main className="flex gap-6 p-6">
-        {/* 3D Canvas Placeholder */}
-        <section className="flex-1">
-          <div className="flex flex-col gap-4">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
-              Spatial View
-            </h2>
-            <div className="relative aspect-video overflow-hidden rounded-xl border border-zinc-800 bg-[#0f0f14] glow-cyan">
-              {/* Placeholder for 3D canvas - integrate Three.js / React Three Fiber here */}
-              <div className="flex h-full w-full items-center justify-center">
-                <div className="flex flex-col items-center gap-3 text-zinc-600">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-zinc-700">
-                    <svg
-                      className="h-8 w-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"
-                      />
-                    </svg>
-                  </div>
-                  <p className="font-mono text-sm">3D Canvas Placeholder</p>
-                  <p className="font-mono text-xs text-zinc-600">
-                    Integrate Three.js / React Three Fiber
-                  </p>
+          <div
+            style={{
+              marginTop: 24,
+              maxWidth: 520,
+              opacity: subtext ? 1 : 0,
+              transform: subtext ? "translateY(0)" : "translateY(12px)",
+              transition: "opacity 500ms ease-out, transform 500ms ease-out",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "Geist, system-ui, sans-serif",
+                fontSize: 16,
+                fontWeight: 400,
+                lineHeight: 1.75,
+                color: "var(--text-muted)",
+                margin: 0,
+              }}
+            >
+              Not the street. Not the phone. The room.
+              <br />
+              The hallway. The object two steps ahead.
+              <br />
+              For hundreds of millions, that space is
+              <br />
+              completely invisible.
+            </p>
+          </div>
+
+          <div
+            className="mt-8 flex flex-wrap gap-3"
+            style={{
+              opacity: stats ? 1 : 0,
+              transform: stats ? "translateY(0)" : "translateY(12px)",
+              transition: "opacity 500ms ease-out, transform 500ms ease-out",
+            }}
+          >
+            {STATS.map((stat, i) => (
+              <div
+                key={stat.label}
+                style={{
+                  flex: "1 1 140px",
+                  minWidth: 140,
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 6,
+                  padding: "16px 20px",
+                  opacity: stats ? 1 : 0,
+                  transform: stats ? "translateY(0)" : "translateY(12px)",
+                  transition: `opacity 500ms ease-out ${i * 100}ms, transform 500ms ease-out ${i * 100}ms`,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "Geist, system-ui, sans-serif",
+                    fontWeight: 700,
+                    fontSize: 36,
+                    color: stat.color,
+                  }}
+                >
+                  {stat.number}
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Real-time Audio Status Panel */}
-        <aside className="w-96 shrink-0">
-          <div className="flex flex-col gap-4">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
-              Real-time Audio
-            </h2>
-            <div className="rounded-xl border border-zinc-800 bg-[#14141c] p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="font-mono text-xs text-zinc-500">
-                  Spatial feedback stream
-                </span>
-                <span className="flex h-2 w-2 animate-pulse rounded-full bg-cyan-500" />
-              </div>
-              <div className="flex flex-col gap-4">
-                {/* Example audio status entries */}
-                <AudioStatusEntry object="Bottle" direction="ahead" />
-                <AudioStatusEntry object="Chair" direction="right" />
-                <AudioStatusEntry object="Table" direction="left" />
-              </div>
-              <div className="mt-4 border-t border-zinc-800 pt-4">
-                <p className="font-mono text-xs text-zinc-600">
-                  Low-latency • On-device • Directional
+                <p
+                  style={{
+                    fontFamily: "Geist, system-ui, sans-serif",
+                    fontSize: 15,
+                    lineHeight: 1.75,
+                    color: "var(--text-muted)",
+                    margin: "4px 0 0",
+                  }}
+                >
+                  {stat.label}
                 </p>
               </div>
-            </div>
-
-            {/* System status */}
-            <div className="rounded-xl border border-zinc-800 bg-[#14141c] p-4">
-              <h3 className="mb-3 font-mono text-xs font-medium uppercase tracking-wider text-zinc-500">
-                System Status
-              </h3>
-              <ul className="space-y-2 font-mono text-sm">
-                <li className="flex justify-between">
-                  <span className="text-zinc-500">Object detection</span>
-                  <span className="text-cyan-400">Active</span>
-                </li>
-                <li className="flex justify-between">
-                  <span className="text-zinc-500">Audio latency</span>
-                  <span className="text-cyan-400">&lt;50ms</span>
-                </li>
-                <li className="flex justify-between">
-                  <span className="text-zinc-500">Tracking</span>
-                  <span className="text-cyan-400">Real-time</span>
-                </li>
-              </ul>
-            </div>
+            ))}
           </div>
-        </aside>
-      </main>
-    </div>
-  );
-}
 
-function StatusPill({
-  status,
-  label,
-}: {
-  status: "live" | "connected";
-  label: string;
-}) {
-  const color =
-    status === "live"
-      ? "bg-cyan-500/20 text-cyan-400"
-      : "bg-emerald-500/20 text-emerald-400";
-  return (
-    <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 ${color}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      <span className="text-xs font-medium">{label}</span>
-    </div>
-  );
-}
-
-function AudioStatusEntry({
-  object,
-  direction,
-}: {
-  object: string;
-  direction: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg border border-zinc-800/60 bg-zinc-900/50 px-4 py-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20">
-        <svg
-          className="h-4 w-4 text-cyan-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-          />
-        </svg>
+          <p
+            style={{
+              fontFamily: "Geist Mono, monospace",
+              fontSize: 10,
+              color: "var(--text-muted)",
+              marginTop: 24,
+            }}
+          >
+            Source: WHO Global Vision Report · IAPB Vision Atlas 2021
+          </p>
+        </div>
       </div>
-      <div className="flex-1">
-        <p className="font-medium text-zinc-100">{object}</p>
-        <p className="font-mono text-xs text-cyan-400">{direction}</p>
-      </div>
-      <span className="font-mono text-xs text-zinc-600">
-        {object}, {direction}
-      </span>
-    </div>
+    </PageShell>
   );
 }
